@@ -192,27 +192,26 @@
       <div class="small"><a href="about.html" class="me-3">About</a><a href="contact.html">Contact</a></div>
     </div>
   </footer>
-
+<script src="js/nsn-shared.js"></script>
+<script src="js/quiz.js"></script>           <!-- page-specific -->
+<!-- or -->
+<script src="js/multimedia.js"></script>     <!-- page-specific -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-  <script>
-   /******************************
+<script>
+/******************************
  * NextStep Navigator — Multimedia
- * Robust JSON-driven JS (data/multimedia.json)
+ * JSON-driven (data/multimedia.json) with NSN shared module
  ******************************/
 
-/******** Config ********/
-const DATA_URL  = 'data/multimedia.json';    // relative path, no leading slash
-const RECENT_KEY = 'nsn_recent';
-const BM_KEY     = 'nsn_bookmarks';
+const DATA_URL = 'data/multimedia.json';
 
-/******** Tiny helpers ********/
-const $  = (s,root=document)=>root.querySelector(s);
-const $$ = (s,root=document)=>[...root.querySelectorAll(s)];
-const toDate = s => new Date(s);
-const capitalize = s => (s||'').charAt(0).toUpperCase() + (s||'').slice(1);
-function escapeHTML(str){ return (str||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+const $  = NSN.utils.$;
+const $$ = NSN.utils.$$;
+const toDate     = (s) => new Date(s);
+const capitalize = (s='') => s.charAt(0).toUpperCase() + s.slice(1);
+const esc        = (s) => NSN.utils.escapeHTML(s);
 
-/******** Personalization ********/
+/******** Personalization header ********/
 function paintHeaderProfile(){
   const nm = sessionStorage.getItem('nsn_name') || '';
   const tp = (sessionStorage.getItem('nsn_type') || '');
@@ -221,77 +220,9 @@ function paintHeaderProfile(){
   if (helloEl)  helloEl.textContent  = (nm || tp) ? `Hi ${nm ? nm : ''}${nm && tp ? ' • ' : ''}${tp ? tp[0].toUpperCase()+tp.slice(1) : ''}` : '';
   if (activeEl) activeEl.textContent = tp ? `Tailored for: ${tp}` : '';
 
-  // Prefill the filter to match user type once (does not set JS state yet; init() will read it)
+  // Prefill the filter to match user type once (init() will read value into state)
   const sel = $('#userTypeFilter');
   if (tp && sel && !sel.value) sel.value = tp;
-}
-
-/******** Recent + Bookmarks (shared) ********/
-function pushRecent(label, href='#'){
-  const arr = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
-  const filtered = arr.filter(x=>x.label!==label);
-  filtered.unshift({label, href, ts: Date.now()});
-  localStorage.setItem(RECENT_KEY, JSON.stringify(filtered.slice(0,8)));
-  paintRecent();
-}
-function paintRecent(){
-  const el = $('#recentList'); if(!el) return;
-  const arr = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
-  el.innerHTML = arr.length ? arr.map(x=>`<li>${x.label}</li>`).join('') : '<li class="text-muted">Nothing yet.</li>';
-}
-
-function getBookmarks(){ try { return JSON.parse(localStorage.getItem(BM_KEY) || '[]'); } catch { return []; } }
-function isBookmarked(id){ return getBookmarks().some(x=>x.id===id); }
-function toggleBookmark(entry){
-  const list = getBookmarks();
-  const idx = list.findIndex(x=>x.id===entry.id);
-  if(idx>=0) list.splice(idx,1);
-  else list.unshift({id:entry.id, href:entry.href||'#', label:entry.label});
-  localStorage.setItem(BM_KEY, JSON.stringify(list.slice(0,200)));
-  paintBookmarks();
-}
-function paintBookmarks(){
-  const el = $('#bookmarkList'); if(!el) return;
-  const list = getBookmarks();
-  el.innerHTML = list.length ? list.map(x=>`<li><i class="bi bi-heart text-danger me-1"></i>${x.label}</li>`).join('') : '<li class="text-muted">No bookmarks yet.</li>';
-}
-function exportBookmarks(){
-  const list = getBookmarks(); if(!list.length){ alert('No bookmarks to export.'); return; }
-  const lines = list.map((x,i)=> `${i+1}. ${x.label}`);
-  const blob = new Blob([lines.join('\n')], {type:'text/plain'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'Bookmarks.txt'; a.click(); URL.revokeObjectURL(url);
-}
-function clearBookmarks(){ localStorage.removeItem(BM_KEY); paintBookmarks(); }
-
-/******** Safer JSON loader (with banner + fallback) ********/
-async function loadJSON(url){
-  try {
-    const r = await fetch(url, {cache:'no-store'});
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
-    return await r.json();
-  } catch (e) {
-    const rc = $('#resultCount');
-    if (rc) rc.textContent = `Could not load ${url}. ${e.message}. Are you using http(s) (not file://)?`;
-    console.error(`Failed to load ${url}`, e);
-
-    // Minimal fallback item so UI isn't empty
-    return [
-      {
-        id: "fallback-video-1",
-        title: "Welcome to NextStep Navigator",
-        format: "video",
-        userType: "student",
-        category: "motivation",
-        date: "2025-01-01",
-        youtubeId: "H14bBuluwB8",
-        speaker: "Team",
-        description: "Fallback item because data/multimedia.json could not be fetched.",
-        tags: ["fallback"],
-        transcript: "This is a fallback transcript."
-      }
-    ];
-  }
 }
 
 /******** Data & State ********/
@@ -308,24 +239,23 @@ function normalizeItems(rows){
       format:   (it.format||'').toLowerCase().trim(),
       date:     it.date || '2000-01-01'
     };
-    // Ensure item has an id
-    if (!norm.id) norm.id = `auto-${Math.random().toString(36).slice(2)}`;
+    if (!norm.id) norm.id = `auto-${Math.random().toString(36).slice(2)}`; // Ensure item has an id
     return norm;
   });
 }
 
 /******** Card renderer ********/
 function itemCard(item){
-  const bmActive = isBookmarked(item.id) ? 'bookmark-active' : '';
-  const tags = (item.tags||[]).map(t=>`<span class="chip"><i class="bi bi-tag"></i> ${escapeHTML(t)}</span>`).join(' ');
+  const bmActive = NSN.isBookmarked(item.id) ? 'bookmark-active' : '';
+  const tags = (item.tags||[]).map(t=>`<span class="chip"><i class="bi bi-tag"></i> ${esc(t)}</span>`).join(' ');
 
   const media = item.format === 'video' && item.youtubeId
-    ? `<div class="thumb"><iframe loading="lazy" title="${escapeHTML(item.title)}"
+    ? `<div class="thumb"><iframe loading="lazy" title="${esc(item.title)}"
          src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(item.youtubeId)}"
          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
          referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>`
     : (item.format === 'podcast' && item.audioUrl
-      ? `<audio controls class="w-100" preload="none" src="${escapeHTML(item.audioUrl)}"></audio>`
+      ? `<audio controls class="w-100" preload="none" src="${esc(item.audioUrl)}"></audio>`
       : `<div class="thumb d-flex align-items-center justify-content-center text-muted">No media</div>`);
 
   return `
@@ -333,28 +263,30 @@ function itemCard(item){
       <article class="feature-card p-3 h-100 d-flex flex-column">
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div class="icon-pill"><i class="bi ${item.icon||'bi-camera-reels'}"></i></div>
-          <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark" data-bm="${item.id}" data-label="${escapeHTML(item.title)}">
+          <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark"
+                  data-bm="${item.id}" data-label="${esc(item.title)}"
+                  data-href="${item.format==='video'&&item.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(item.youtubeId)}` : (item.audioUrl||'#')}">
             <i class="bi bi-heart-fill"></i>
           </button>
         </div>
-        <h6 class="mb-1">${escapeHTML(item.title)}</h6>
+        <h6 class="mb-1">${esc(item.title)}</h6>
         <div class="meta mb-2">
-          <i class="bi bi-person-video3 me-1"></i>${escapeHTML(item.speaker||'—')}
+          <i class="bi bi-person-video3 me-1"></i>${esc(item.speaker||'—')}
           · <i class="bi bi-collection-play me-1"></i>${capitalize(item.category)}
           · <i class="bi bi-people me-1"></i>${capitalize(item.userType)}
           · <i class="bi bi-calendar-event me-1"></i>${new Date(item.date).toLocaleDateString()}
         </div>
         ${media}
-        <p class="small muted mt-2 mb-2">${escapeHTML(item.description||'')}</p>
+        <p class="small muted mt-2 mb-2">${esc(item.description||'')}</p>
         <div class="d-flex flex-wrap gap-1 mb-2">${tags}</div>
 
         <div class="mt-auto">
           <div class="d-flex flex-wrap gap-2">
             ${item.format==='video' && item.youtubeId ? `<a class="btn btn-outline-primary btn-sm" target="_blank" rel="noreferrer" href="https://www.youtube.com/watch?v=${encodeURIComponent(item.youtubeId)}"><i class="bi bi-box-arrow-up-right me-1"></i> Open on YouTube</a>` : ''}
-            ${item.format==='podcast' && item.audioUrl ? `<a class="btn btn-outline-primary btn-sm" target="_blank" rel="noreferrer" href="${escapeHTML(item.audioUrl)}"><i class="bi bi-box-arrow-up-right me-1"></i> Open audio</a>` : ''}
+            ${item.format==='podcast' && item.audioUrl ? `<a class="btn btn-outline-primary btn-sm" target="_blank" rel="noreferrer" href="${esc(item.audioUrl)}"><i class="bi bi-box-arrow-up-right me-1"></i> Open audio</a>` : ''}
             ${item.transcript ? `<button class="btn btn-light btn-sm" data-tx="${item.id}"><i class="bi bi-text-paragraph me-1"></i> Transcript</button>` : ''}
           </div>
-          <div class="mt-2 transcript hidden" id="tx-${item.id}">${escapeHTML(item.transcript||'')}</div>
+          <div class="mt-2 transcript hidden" id="tx-${item.id}">${esc(item.transcript||'')}</div>
         </div>
       </article>
     </div>`;
@@ -423,8 +355,12 @@ function render(){
   $$('[data-bm]').forEach(btn=>{
     btn.addEventListener('click', (e)=>{
       e.preventDefault();
-      const entry = { id: btn.getAttribute('data-bm'), label: btn.getAttribute('data-label') };
-      toggleBookmark(entry);
+      const entry = {
+        id: btn.getAttribute('data-bm'),
+        label: btn.getAttribute('data-label') || 'Item',
+        href: btn.getAttribute('data-href') || '#'
+      };
+      NSN.toggleBookmark(entry, '#bookmarkList');
       $$(`[data-bm="${entry.id}"]`).forEach(b=>b.classList.toggle('bookmark-active'));
     });
   });
@@ -468,19 +404,23 @@ function wire(){
     render();
   });
 
-  $('#exportBookmarks')?.addEventListener('click', exportBookmarks);
-  $('#clearBookmarks')?.addEventListener('click', clearBookmarks);
+  // Shared sidebar actions
+  $('#exportBookmarks')?.addEventListener('click', ()=>NSN.exportBookmarks('Bookmarks.txt'));
+  $('#clearBookmarks')?.addEventListener('click', ()=>NSN.clearBookmarks('#bookmarkList'));
 }
 
 /******** Init ********/
 async function init(){
-  const yearEl = $('#year'); if (yearEl) yearEl.textContent = new Date().getFullYear();
+  NSN.utils.setYear('#year');
   paintHeaderProfile();
-  paintRecent();
-  paintBookmarks();
+
+  // Shared sidebars
+  NSN.getRecent();                 // sanitize any old/bad data
+  NSN.paintRecent('#recentList');
+  NSN.paintBookmarks('#bookmarkList');
 
   try{
-    const raw = await loadJSON(DATA_URL);
+    const raw = await NSN.loadJSON(DATA_URL, { fallback: [], onErrorMessageSelector:'#resultCount' });
     ITEMS = normalizeItems(Array.isArray(raw) ? raw : []);
   } catch(err){
     console.error(err);
@@ -504,7 +444,7 @@ async function init(){
     $('#btnClear')?.click();
   }
 
-  pushRecent('Opened Multimedia');
+  NSN.pushRecent('Opened Multimedia', 'multimedia.html', '#recentList');
 
   // Quick diagnostics bubble (auto-removes)
   (async function diagnostics(){
@@ -533,7 +473,7 @@ async function init(){
 }
 
 document.addEventListener('DOMContentLoaded', init);
+</script>
 
-  </script>
 </body>
 </html>
