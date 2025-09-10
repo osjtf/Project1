@@ -1,0 +1,118 @@
+{
+  "technology": {
+    "total": 12,
+    "questions": [
+      {
+        "q": "Which activity sounds most exciting?",
+        "choices": [
+          {"t":"Building a mobile app prototype", "s":{"technology":3, "design":1}},
+          {"t":"Planning a marketing campaign", "s":{"business":2}},
+          {"t":"Designing a poster for an event", "s":{"design":2}},
+          {"t":"Assisting in a clinic", "s":{"healthcare":2}}
+        ]
+      },
+      {
+        "q": "Pick a course you’d enjoy the most:",
+        "choices": [
+          {"t":"Algorithms & Problem Solving", "s":{"technology":3}},
+          {"t":"Financial Accounting", "s":{"business":2}},
+          {"t":"Human Anatomy", "s":{"healthcare":2}},
+          {"t":"Product Design Studio", "s":{"design":2}}
+        ]
+      },
+      {
+        "q": "In a team, you naturally become the…",
+        "choices": [
+          {"t":"Coder / Troubleshooter", "s":{"technology":3}},
+          {"t":"Organizer / Presenter", "s":{"business":2}},
+          {"t":"Visualizer / Prototyper", "s":{"design":2}},
+          {"t":"Support / Carer", "s":{"healthcare":2}}
+        ]
+      },
+      {
+        "q": "Which challenge sounds fun?",
+        "choices": [
+          {"t":"Automate a boring task", "s":{"technology":3}},
+          {"t":"Grow social media conversions", "s":{"business":2}},
+          {"t":"Redesign a confusing form", "s":{"design":2}},
+          {"t":"Simplify patient instructions", "s":{"healthcare":2}}
+        ]
+      },
+      {
+        "q": "Choose a tool to master:",
+        "choices": [
+          {"t":"JavaScript/Python", "s":{"technology":3}},
+          {"t":"Excel/Power BI", "s":{"business":2, "technology":1}},
+          {"t":"Figma", "s":{"design":3}},
+          {"t":"EMR System", "s":{"healthcare":3}}
+        ]
+      },
+      {
+        "q": "Preferred work environment:",
+        "choices": [
+          {"t":"Product/Tech company", "s":{"technology":3}},
+          {"t":"Agency/Client projects", "s":{"business":2, "design":1}},
+          {"t":"Hospital/Clinic", "s":{"healthcare":3}},
+          {"t":"Engineering firm", "s":{"engineering":3}}
+        ]
+      },
+      {
+        "q": "What motivates you most?",
+        "choices": [
+          {"t":"Solving complex problems", "s":{"technology":3, "engineering":1}},
+          {"t":"Helping people directly", "s":{"healthcare":3}},
+          {"t":"Making things look & feel better", "s":{"design":3}},
+          {"t":"Optimizing business outcomes", "s":{"business":3}}
+        ]
+      },
+      {
+        "q": "Pick a mini-project:",
+        "choices": [
+          {"t":"Build a chatbot", "s":{"technology":3}},
+          {"t":"Design brand identity", "s":{"design":3}},
+          {"t":"Budget forecasting", "s":{"business":3}},
+          {"t":"Patient education leaflet", "s":{"healthcare":3}}
+        ]
+      },
+      {
+        "q": "Which article would you read first?",
+        "choices": [
+          {"t":"‘Intro to APIs’", "s":{"technology":3}},
+          {"t":"‘Market Segmentation 101’", "s":{"business":3}},
+          {"t":"‘Principles of Ergonomics’", "s":{"engineering":3}},
+          {"t":"‘Digital Therapeutics’", "s":{"healthcare":3}}
+        ]
+      },
+      {
+        "q": "Your strength is:",
+        "choices": [
+          {"t":"Logic & debugging", "s":{"technology":3}},
+          {"t":"Communication & pitching", "s":{"business":3}},
+          {"t":"Empathy & patience", "s":{"healthcare":3}},
+          {"t":"Sketching & prototyping", "s":{"design":3}}
+        ]
+      },
+      {
+        "q": "Pick a mentor session:",
+        "choices": [
+          {"t":"Cloud careers roadmapping", "s":{"technology":3}},
+          {"t":"CV & interview strategy", "s":{"business":2}},
+          {"t":"Clinical pathways", "s":{"healthcare":3}},
+          {"t":"Design critique", "s":{"design":3}}
+        ]
+      },
+      {
+        "q": "Which club would you join?",
+        "choices": [
+          {"t":"Coding club", "s":{"technology":3}},
+          {"t":"Entrepreneurship club", "s":{"business":3}},
+          {"t":"Makers/Robotics", "s":{"engineering":3, "technology":1}},
+          {"t":"Art & Design club", "s":{"design":3}}
+        ]
+      }
+    ]},
+  "healthcare": { "use": "technology" },
+  "business":   { "use": "technology" },
+  "design":     { "use": "technology" },
+  "engineering":{ "use": "technology" }
+}

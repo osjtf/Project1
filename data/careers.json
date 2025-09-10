@@ -1,0 +1,122 @@
+[
+    {
+        "id": "sw-eng",
+        "title": "Software Engineer",
+        "industry": "Technology",
+        "skills": ["JavaScript", "Algorithms", "Git", "APIs"],
+        "education": "BSc in CS or related; Bootcamp acceptable",
+        "salaryMin": 65000,
+        "salaryMax": 130000,
+        "icon": "bi-code-slash"
+    },
+    {
+        "id": "data-analyst",
+        "title": "Data Analyst",
+        "industry": "Technology",
+        "skills": ["SQL", "Excel", "Visualization", "Python"],
+        "education": "BSc in IS/Statistics/Business Analytics",
+        "salaryMin": 55000,
+        "salaryMax": 105000,
+        "icon": "bi-bar-chart-line"
+    },
+    {
+        "id": "ui-ux",
+        "title": "UI/UX Designer",
+        "industry": "Design",
+        "skills": ["Wireframing", "Figma", "User Research", "Prototyping"],
+        "education": "Design/CS or strong portfolio",
+        "salaryMin": 50000,
+        "salaryMax": 100000,
+        "icon": "bi-palette2"
+    },
+    {
+        "id": "nurse",
+        "title": "Registered Nurse",
+        "industry": "Healthcare",
+        "skills": ["Patient Care", "Clinical Skills", "EMR", "Teamwork"],
+        "education": "BSN/Associate in Nursing + License",
+        "salaryMin": 60000,
+        "salaryMax": 98000,
+        "icon": "bi-heart-pulse"
+    },
+    {
+        "id": "physician",
+        "title": "Physician (General)",
+        "industry": "Healthcare",
+        "skills": ["Diagnostics", "EMR", "Communication", "Clinical"],
+        "education": "MD + Residency + License",
+        "salaryMin": 160000,
+        "salaryMax": 250000,
+        "icon": "bi-clipboard2-pulse"
+    },
+    {
+        "id": "acct",
+        "title": "Accountant",
+        "industry": "Business",
+        "skills": ["Accounting", "Tax", "Excel", "ERP"],
+        "education": "BCom/Accounting + CPA advantage",
+        "salaryMin": 48000,
+        "salaryMax": 90000,
+        "icon": "bi-calculator"
+    },
+    {
+        "id": "mktg",
+        "title": "Digital Marketer",
+        "industry": "Business",
+        "skills": ["SEO", "Content", "Ads", "Analytics"],
+        "education": "Marketing/Business or Certifications",
+        "salaryMin": 45000,
+        "salaryMax": 95000,
+        "icon": "bi-megaphone"
+    },
+    {
+        "id": "civil",
+        "title": "Civil Engineer",
+        "industry": "Engineering",
+        "skills": ["AutoCAD", "Project Mgmt", "Survey", "Materials"],
+        "education": "BSc Civil Engineering",
+        "salaryMin": 65000,
+        "salaryMax": 120000,
+        "icon": "bi-building"
+    },
+    {
+        "id": "mech",
+        "title": "Mechanical Engineer",
+        "industry": "Engineering",
+        "skills": ["CAD", "Thermodynamics", "Manufacturing"],
+        "education": "BSc Mechanical Engineering",
+        "salaryMin": 64000,
+        "salaryMax": 118000,
+        "icon": "bi-cpu"
+    },
+    {
+        "id": "teacher",
+        "title": "High School Teacher",
+        "industry": "Education",
+        "skills": ["Lesson Plans", "Assessment", "Classroom Mgmt"],
+        "education": "BEd + Subject Specialization",
+        "salaryMin": 42000,
+        "salaryMax": 80000,
+        "icon": "bi-journal-bookmark"
+    },
+    {
+        "id": "lawyer",
+        "title": "Lawyer",
+        "industry": "Law",
+        "skills": ["Legal Research", "Contracts", "Litigation"],
+        "education": "LLB/JD + Bar License",
+        "salaryMin": 90000,
+        "salaryMax": 180000,
+        "icon": "bi-balance-scale"
+    },
+    {
+        "id": "cyber",
+        "title": "Cybersecurity Analyst",
+        "industry": "Technology",
+        "skills": ["SIEM", "Threat Hunting", "Networking", "Linux"],
+        "education": "BSc CS/IT + Security Certs",
+        "salaryMin": 70000,
+        "salaryMax": 130000,
+        "icon": "bi-shield-lock"
+    }
+]
