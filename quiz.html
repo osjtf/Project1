@@ -196,20 +196,40 @@
       <div class="small"><a href="about.html" class="me-3">About</a><a href="contact.html">Contact</a></div>
     </div>
   </footer>
-
+<script src="js/nsn-shared.js"></script>
+<script src="js/quiz.js"></script>           <!-- page-specific -->
+<!-- or -->
+<script src="js/multimedia.js"></script>     <!-- page-specific -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
   <script>
-  /**********************
+/**********************
  * NextStep Navigator — Interest Quiz
- * JS: JSON-driven (careers.json + quiz.json)
+ * JS: JSON-driven (careers.json + quiz.json), using NSN shared module
  **********************/
 
-/* ---------- Shared storage keys & helpers ---------- */
-const RECENT_KEY = 'nsn_recent';
-const BM_KEY = 'nsn_bookmarks';
+const $  = NSN.utils.$;
+const $$ = NSN.utils.$$;
 
-const $  = (s, root=document)=>root.querySelector(s);
-const $$ = (s, root=document)=>[...root.querySelectorAll(s)];
+/* ---------- Data containers ---------- */
+let CAREERS   = [];   // from data/careers.json
+let QUIZ_DATA = {};   // from data/quiz.json (expanded)
+
+/* ---------- Stream <-> Industry normalization ---------- */
+const STREAM_TO_INDUSTRY = {
+  technology: 'Technology',
+  business: 'Business',
+  design: 'Design',
+  healthcare: 'Healthcare',
+  engineering: 'Engineering'
+};
+
+/* ---------- State ---------- */
+const state = {
+  interest: null,      // selected quiz category key (e.g. 'technology')
+  idx: 0,              // current question index
+  answers: [],         // choice index per question
+  scores: {technology:0,business:0,design:0,healthcare:0,engineering:0}
+};
 
 /* ---------- Personalization in header ---------- */
 function paintHeaderProfile(){
@@ -223,56 +243,15 @@ function paintHeaderProfile(){
   if (activeEl) activeEl.textContent = label;
 }
 
-/* ---------- Recent & Bookmarks (shared across pages) ---------- */
-function pushRecent(label, href='#'){
-  const arr = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
-  const filtered = arr.filter(x=>x.label!==label);
-  filtered.unshift({label, href, ts: Date.now()});
-  localStorage.setItem(RECENT_KEY, JSON.stringify(filtered.slice(0,8)));
-  paintRecent();
-}
-function paintRecent(){
-  const el = $('#recentList');
-  if (!el) return;
-  const arr = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
-  el.innerHTML = arr.length ? arr.map(x=>`<li>${x.label}</li>`).join('') : '<li class="text-muted">Nothing yet.</li>';
-}
-
-function getBookmarks(){ try { return JSON.parse(localStorage.getItem(BM_KEY) || '[]'); } catch { return []; } }
-function isBookmarked(id){ return getBookmarks().some(x=>x.id===id); }
-function toggleBookmark(entry){
-  const list = getBookmarks();
-  const idx = list.findIndex(x=>x.id===entry.id);
-  if(idx>=0) list.splice(idx,1);
-  else list.unshift({id:entry.id, href:entry.href||'#', label:entry.label});
-  localStorage.setItem(BM_KEY, JSON.stringify(list.slice(0,100)));
-  paintBookmarks();
-}
-function paintBookmarks(){
-  const el = $('#bookmarkList');
-  if (!el) return;
-  const list = getBookmarks();
-  el.innerHTML = list.length ? list.map(x=>`<li><i class="bi bi-heart text-danger me-1"></i>${x.label}</li>`).join('') : '<li class="text-muted">No bookmarks yet.</li>';
-}
-function exportBookmarks(){
-  const list = getBookmarks(); if(!list.length){ alert('No bookmarks to export.'); return; }
-  const lines = list.map((x,i)=> `${i+1}. ${x.label}`);
-  const blob = new Blob([lines.join('\n')], {type:'text/plain'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'Bookmarks.txt'; a.click(); URL.revokeObjectURL(url);
-}
-function clearBookmarks(){ localStorage.removeItem(BM_KEY); paintBookmarks(); }
-
 /* ---------- Loaders (JSON) ---------- */
 async function loadJSON(url){
-  const r = await fetch(url, {cache:'no-store'});
-  if(!r.ok) throw new Error(`Failed to load ${url}: ${r.status}`);
-  return r.json();
+  // Delegate to shared loader; show message in #resultCount if it exists
+  return NSN.loadJSON(url, { fallback: null, onErrorMessageSelector: '#resultCount' });
 }
 
 /** Expand quiz aliases like {"use":"technology"} */
 function expandQuizAliases(quiz){
-  const out = JSON.parse(JSON.stringify(quiz)); // deep clone
+  const out = JSON.parse(JSON.stringify(quiz || {})); // deep clone
   for (const [k,v] of Object.entries(out)){
     if (v && typeof v === 'object' && 'use' in v){
       const ref = v.use;
@@ -284,29 +263,6 @@ function expandQuizAliases(quiz){
   }
   return out;
 }
-
-/* ---------- Data containers ---------- */
-let CAREERS = [];   // from data/careers.json
-let QUIZ_DATA = {}; // from data/quiz.json (expanded)
-
-/* ---------- Stream <-> Industry normalization ---------- */
-/* The quiz streams are lowercase: technology, business, design, healthcare, engineering
-   Careers use Industry with capitalized names: Technology, Business, Design, Healthcare, Engineering */
-const STREAM_TO_INDUSTRY = {
-  technology: 'Technology',
-  business: 'Business',
-  design: 'Design',
-  healthcare: 'Healthcare',
-  engineering: 'Engineering'
-};
-
-/* ---------- State ---------- */
-const state = {
-  interest:null,         // selected quiz category key (e.g. 'technology')
-  idx:0,                 // current question index
-  answers:[],            // choice index per question
-  scores:{technology:0,business:0,design:0,healthcare:0,engineering:0}
-};
 
 /* ---------- Quiz flow ---------- */
 function startQuiz(interest){
@@ -331,7 +287,7 @@ function startQuiz(interest){
   if (active) active.textContent = `Interest focus: ${interest[0].toUpperCase()+interest.slice(1)}`;
 
   renderQuestion();
-  pushRecent('Started Interest Quiz');
+  NSN.pushRecent('Started Interest Quiz', 'quiz.html', '#recentList');
 }
 
 function renderQuestion(){
@@ -349,7 +305,7 @@ function renderQuestion(){
   q.choices.forEach((c, i)=>{
     const d = document.createElement('label'); d.className = 'choice';
     if(state.answers[state.idx] === i) d.classList.add('active');
-    d.innerHTML = `<input type="radio" name="choice" value="${i}"> ${c.t}`;
+    d.innerHTML = `<input type="radio" name="choice" value="${i}"> ${NSN.utils.escapeHTML(c.t)}`;
     d.addEventListener('click', ()=>{
       state.answers[state.idx] = i;
       $$('.choice').forEach(x=>x.classList.remove('active'));
@@ -392,7 +348,7 @@ function showResults(){
   const sb = $('#streamBadges');
   if (sb){
     sb.innerHTML = ranked.length
-      ? ranked.slice(0,3).map(x=>`<span class="badge text-bg-primary">${x.stream} • ${x.score}</span>`).join(' ')
+      ? ranked.slice(0,3).map(x=>`<span class="badge text-bg-primary">${NSN.utils.escapeHTML(x.stream)} • ${x.score}</span>`).join(' ')
       : '<span class="text-muted small">No signals yet — try retaking.</span>';
   }
 
@@ -415,11 +371,11 @@ function showResults(){
   }
 
   bindCareerActions();
-  pushRecent('Viewed Quiz Results');
+  NSN.pushRecent('Viewed Quiz Results', 'quiz.html#results', '#recentList');
 }
 
 function careerCard(c){
-  const bmActive = isBookmarked(c.id) ? 'bookmark-active' : '';
+  const bmActive = NSN.isBookmarked(c.id) ? 'bookmark-active' : '';
   const href = c.href || `careers.html?c=${encodeURIComponent(c.id)}`;
   return `
     <div class="col-12 col-md-6">
@@ -427,12 +383,12 @@ function careerCard(c){
         <div class="d-flex align-items-start gap-3">
           <div class="icon-pill"><i class="bi ${c.icon||'bi-briefcase'}"></i></div>
           <div>
-            <div class="small text-uppercase text-muted">${c.industry||''}</div>
-            <h6 class="mb-1">${c.title}</h6>
+            <div class="small text-uppercase text-muted">${NSN.utils.escapeHTML(c.industry||'')}</div>
+            <h6 class="mb-1">${NSN.utils.escapeHTML(c.title)}</h6>
             <a class="small" href="${href}">Open in Career Bank</a>
           </div>
         </div>
-        <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark" data-bm="${c.id}" data-label="${c.title}" data-href="${href}">
+        <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark" data-bm="${c.id}" data-label="${NSN.utils.escapeHTML(c.title)}" data-href="${href}">
           <i class="bi bi-heart-fill"></i>
         </button>
       </div>
@@ -446,10 +402,10 @@ function bindCareerActions(){
       e.preventDefault();
       const entry = {
         id: btn.getAttribute('data-bm'),
-        label: btn.getAttribute('data-label'),
+        label: btn.getAttribute('data-label') || 'Career',
         href: btn.getAttribute('data-href') || '#'
       };
-      toggleBookmark(entry);
+      NSN.toggleBookmark(entry, '#bookmarkList');
       $$(`[data-bm="${entry.id}"]`).forEach(b=>b.classList.toggle('bookmark-active'));
     });
   });
@@ -538,11 +494,11 @@ function wire(){
   $('#btnSave')?.addEventListener('click', ()=>{
     // save all shown recommendations
     $$('[data-bm]').forEach(btn=>{
-      toggleBookmark({
+      NSN.toggleBookmark({
         id: btn.getAttribute('data-bm'),
-        label: btn.getAttribute('data-label'),
+        label: btn.getAttribute('data-label') || 'Career',
         href: btn.getAttribute('data-href') || '#'
-      });
+      }, '#bookmarkList');
       btn.classList.add('bookmark-active');
     });
     alert('Saved your recommended careers to Bookmarks.');
@@ -554,22 +510,24 @@ function wire(){
     window.scrollTo({top:0, behavior:'smooth'});
   });
 
-  // Sidebar bookmarks
-  $('#exportBookmarks')?.addEventListener('click', exportBookmarks);
-  $('#clearBookmarks')?.addEventListener('click', clearBookmarks);
+  // Sidebar bookmarks/recents (shared)
+  $('#exportBookmarks')?.addEventListener('click', ()=>NSN.exportBookmarks('Bookmarks.txt'));
+  $('#clearBookmarks')?.addEventListener('click', ()=>NSN.clearBookmarks('#bookmarkList'));
 }
 
 /* ---------- Init: load JSON first, then wire UI ---------- */
 async function init(){
-  const yearEl = $('#year'); if (yearEl) yearEl.textContent = new Date().getFullYear();
+  NSN.utils.setYear('#year');
   paintHeaderProfile();
-  paintRecent();
-  paintBookmarks();
+
+  // Shared sidebars
+  NSN.getRecent();          // sanitize any old data
+  NSN.paintRecent('#recentList');
+  NSN.paintBookmarks('#bookmarkList');
 
   try {
-    // Load careers and quiz data
-    CAREERS   = await loadJSON('data/careers.json');
-    const raw = await loadJSON('data/quiz.json');
+    CAREERS   = await loadJSON('data/careers.json')  || [];
+    const raw = await loadJSON('data/quiz.json')     || {};
     QUIZ_DATA = expandQuizAliases(raw);
   } catch (e) {
     console.error(e);
@@ -577,17 +535,20 @@ async function init(){
     return;
   }
 
-  // Now that data is ready, wire the UI
+  // Wire UI after data is ready
   wire();
 
-  // Optional: deep links (e.g., ?mode=ugpg → preselect technology)
+  // Optional: deep links (e.g., ?mode=ugpg → preselect interest)
   const params = new URLSearchParams(location.search);
   const mode = params.get('mode');
   const map = { ugpg:'technology', pro:'business' };
   if(map[mode]) startQuiz(map[mode]);
+
+  NSN.pushRecent('Opened Quiz', 'quiz.html', '#recentList');
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
 
   </script>
 </body>
