@@ -342,7 +342,10 @@
       </div>
     </div>
   </footer>
-
+<script src="js/nsn-shared.js"></script>
+<script src="js/quiz.js"></script>           <!-- page-specific -->
+<!-- or -->
+<script src="js/multimedia.js"></script>     <!-- page-specific -->
   <!-- Bootstrap JS -->
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
@@ -350,254 +353,253 @@
     crossorigin="anonymous"></script>
 
   <script>
-    // -----------------------------
-    // Utility: DOM helpers
-    // -----------------------------
-    const $ = (sel, root=document) => root.querySelector(sel);
-    const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
-    const byId = id => document.getElementById(id);
 
-    // -----------------------------
-    // Clock
-    // -----------------------------
-    function startClock(){
-      const el = byId('clock');
-      const fmt = new Intl.DateTimeFormat(undefined, {
-        hour:'2-digit', minute:'2-digit', second:'2-digit'
-      });
-      const tick = () => el.textContent = fmt.format(new Date());
-      tick();
-      setInterval(tick, 1000);
-    }
+/* Home page script — uses NSN shared module (assets/nsn-shared.js) */
+const $  = NSN.utils.$;
+const $$ = NSN.utils.$$;
 
-    // -----------------------------
-    // Geolocation (coords only)
-    // -----------------------------
-    function initGeo(){
-      const el = byId('geo');
-      if(!navigator.geolocation){
-        el.textContent = 'Geolocation not supported';
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        (pos)=>{
-          const {latitude, longitude} = pos.coords;
-          el.textContent = `Lat ${latitude.toFixed(3)}, Lng ${longitude.toFixed(3)}`;
-          el.classList.remove('d-none');
-        },
-        ()=>{
-          el.textContent = 'Location: permission denied';
-          el.classList.remove('d-none');
-        },
-        {enableHighAccuracy:false, timeout:6000, maximumAge:60000}
-      );
-    }
+/* -----------------------------
+   Clock (HH:MM:SS)
+----------------------------- */
+function startClock(){
+  const el = document.getElementById('clock');
+  if (!el) return;
+  const fmt = new Intl.DateTimeFormat(undefined, { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  const tick = () => { el.textContent = fmt.format(new Date()); };
+  tick();
+  setInterval(tick, 1000);
+}
 
-    // -----------------------------
-    // Visitor Counter (local)
-    // -----------------------------
-    function bumpVisitor(){
-      const key = 'nsn_visits';
-      let n = parseInt(localStorage.getItem(key) || '0',10);
-      n += 1;
-      localStorage.setItem(key, String(n));
-      byId('visitorCount').textContent = n.toLocaleString();
-    }
+/* -----------------------------
+   Geolocation (coords only)
+----------------------------- */
+function initGeo(){
+  const el = document.getElementById('geo');
+  if (!el) return;
+  if(!navigator.geolocation){
+    el.textContent = 'Geolocation not supported';
+    el.classList.remove('d-none');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (pos)=>{
+      const {latitude, longitude} = pos.coords;
+      el.textContent = `Lat ${latitude.toFixed(3)}, Lng ${longitude.toFixed(3)}`;
+      el.classList.remove('d-none');
+    },
+    ()=>{
+      el.textContent = 'Location: permission denied';
+      el.classList.remove('d-none');
+    },
+    { enableHighAccuracy:false, timeout:6000, maximumAge:60000 }
+  );
+}
 
-    // -----------------------------
-    // Personalization (session)
-    // -----------------------------
-    function applyProfile(){
-      const name = byId('username').value.trim();
-      const type = byId('userType').value;
-      if(name) sessionStorage.setItem('nsn_name', name);
-      if(type) sessionStorage.setItem('nsn_type', type);
-      paintGreeting();
-      paintTailored();
-    }
+/* -----------------------------
+   Visitor Counter (local)
+----------------------------- */
+function bumpVisitor(){
+  const el = document.getElementById('visitorCount');
+  if (!el) return;
+  const key = 'nsn_visits';
+  let n = parseInt(localStorage.getItem(key) || '0',10);
+  n += 1;
+  localStorage.setItem(key, String(n));
+  el.textContent = n.toLocaleString();
+}
 
-    function paintGreeting(){
-      const name = sessionStorage.getItem('nsn_name') || '';
-      const type = sessionStorage.getItem('nsn_type') || '';
-      const g = byId('greeting');
-      let title = '';
-      if(type==='student') title='Future Scholar';
-      else if(type==='graduate') title='Rising Graduate';
-      else if(type==='professional') title='Career Trailblazer';
-      const lines = [];
-      if(name || type){
-        lines.push(`<div class="alert alert-info mt-3 mb-0 border-0">
-          <strong>Hello${name?`, ${name}`:''}!</strong>
-          ${title?` Welcome, <em>${title}</em>.`:''}
-          Your experience is now tailored to <strong>${type||'—'}</strong>.
-        </div>`);
-      } else {
-        lines.push(`<div class="text-muted small mt-2">Tip: Enter your name and choose a user type to personalize.</div>`);
-      }
-      g.innerHTML = lines.join('');
-    }
+/* -----------------------------
+   Personalization (session)
+----------------------------- */
+function applyProfile(){
+  const nameEl = document.getElementById('username');
+  const typeEl = document.getElementById('userType');
+  if (!nameEl || !typeEl) return;
 
-    // -----------------------------
-    // Tailored menu data (static)
-    // -----------------------------
-    const TAILORED = {
-      student: [
-        {title:'Career Bank', icon:'bi-briefcase', href:'careers.html', desc:'Explore careers aligned with school subjects.'},
-        {title:'Interest Quiz', icon:'bi-ui-checks-grid', href:'quiz.html', desc:'Discover your strengths & streams.'},
-        {title:'Study Tips', icon:'bi-mortarboard', href:'admissions.html#stream', desc:'Choose streams post-10th with confidence.'},
-        {title:'Multimedia', icon:'bi-camera-reels', href:'multimedia.html?cat=motivation', desc:'Talks & podcasts for students.'},
-        {title:'Success Stories', icon:'bi-stars', href:'stories.html?domain=engineering', desc:'Inspiration from real journeys.'},
-        {title:'Resource Library', icon:'bi-journal-text', href:'resources.html?type=checklists', desc:'Checklists & guides for exams.'},
-      ],
-      graduate: [
-        {title:'Career Bank', icon:'bi-briefcase', href:'careers.html?filter=graduate', desc:'Roles, skills, and salary insights.'},
-        {title:'Interest Quiz', icon:'bi-ui-checks-grid', href:'quiz.html?mode=ugpg', desc:'Map interests to majors.'},
-        {title:'Interview Tips', icon:'bi-patch-question', href:'admissions.html#interview', desc:'Ace your first interviews.'},
-        {title:'Resume Guidelines', icon:'bi-file-earmark-person', href:'admissions.html#resume', desc:'Craft a standout resume.'},
-        {title:'Multimedia', icon:'bi-camera-reels', href:'multimedia.html?cat=internships', desc:'Internship advice & journeys.'},
-        {title:'Resource Library', icon:'bi-journal-text', href:'resources.html?type=ebooks', desc:'eBooks, templates & articles.'},
-      ],
-      professional: [
-        {title:'Career Bank', icon:'bi-briefcase', href:'careers.html?filter=professional', desc:'Upskilling paths & transitions.'},
-        {title:'Interest Quiz', icon:'bi-ui-checks-grid', href:'quiz.html?mode=pro', desc:'Find adjacent career moves.'},
-        {title:'Interview Tips', icon:'bi-chat-square-quote', href:'admissions.html#interview', desc:'Senior interview strategies.'},
-        {title:'Resume Guidelines', icon:'bi-file-earmark-person', href:'admissions.html#resume', desc:'Reframe experience for pivots.'},
-        {title:'Multimedia', icon:'bi-camera-reels', href:'multimedia.html?cat=roles', desc:'Day-in-the-life videos.'},
-        {title:'Resource Library', icon:'bi-journal-text', href:'resources.html?type=webinars', desc:'Webinars & checklists.'},
-      ]
-    };
+  const name = nameEl.value.trim();
+  const type = typeEl.value;
 
-    function cardHTML(item){
-      return `
-        <div class="col-6 col-md-4 col-lg-3">
-          <a class="feature-card d-block p-3 h-100 pointer quick-link" data-href="${item.href}">
-            <div class="d-flex align-items-center justify-content-between mb-1">
-              <span class="fw-bold">${item.title}</span>
-              <i class="bi ${item.icon} fs-4 text-primary"></i>
-            </div>
-            <p class="small text-muted mb-0">${item.desc}</p>
-          </a>
-        </div>`;
-    }
+  if(name) sessionStorage.setItem('nsn_name', name);
+  else     sessionStorage.removeItem('nsn_name');
 
-    function paintTailored(){
-      const grid = byId('tailoredGrid');
-      const who = byId('whoLabel');
-      const type = sessionStorage.getItem('nsn_type');
-      grid.innerHTML = '';
-      if(!type){ who.textContent = 'Choose your user type to see relevant content.'; return; }
-      const list = TAILORED[type] || [];
-      who.textContent = `Showing recommendations for: ${type.charAt(0).toUpperCase()+type.slice(1)}`;
-      grid.innerHTML = list.map(cardHTML).join('');
-      bindQuickLinks();
-    }
+  if(type) sessionStorage.setItem('nsn_type', type);
+  else     sessionStorage.removeItem('nsn_type');
 
-    // -----------------------------
-    // Recently Viewed & Bookmarks
-    // -----------------------------
-    function pushRecent(href, label){
-      const key = 'nsn_recent';
-      const arr = JSON.parse(localStorage.getItem(key) || '[]');
-      // dedupe by href
-      const filtered = arr.filter(x => x.href !== href);
-      filtered.unshift({href, label, ts: Date.now()});
-      localStorage.setItem(key, JSON.stringify(filtered.slice(0,8)));
-      paintRecent();
-    }
+  paintGreeting();
+  paintTailored();
 
-    function paintRecent(){
-      const el = byId('recentList');
-      const arr = JSON.parse(localStorage.getItem('nsn_recent') || '[]');
-      if(!arr.length){ el.innerHTML = `<li class="text-muted small">No items yet.</li>`; return; }
-      el.innerHTML = arr.map(x => `<li><a href="${x.href}" class="link-primary">${x.label||x.href}</a></li>`).join('');
-    }
+  // If you show header chips on home too:
+  NSN.paintHeaderProfile('#helloUser', '#activeProfile', '#userTypeFilter');
+}
 
-    function paintBookmarks(){
-      const el = byId('bookmarkList');
-      const arr = JSON.parse(localStorage.getItem('nsn_bookmarks') || '[]');
-      if(!arr.length){ el.innerHTML = `<li class="text-muted small">Empty for now.</li>`; return; }
-      el.innerHTML = arr.map(x => `<li><a href="${x.href}" class="link-primary">${x.label||x.href}</a></li>`).join('');
-    }
+function paintGreeting(){
+  const name = sessionStorage.getItem('nsn_name') || '';
+  const type = sessionStorage.getItem('nsn_type') || '';
+  const g = document.getElementById('greeting');
+  if (!g) return;
 
-    function exportBookmarks(){
-      const arr = JSON.parse(localStorage.getItem('nsn_bookmarks') || '[]');
-      if(!arr.length){ alert('No bookmarks to export.'); return; }
-      const lines = arr.map((x,i)=> `${i+1}. ${x.label||x.href} — ${x.href}`);
-      const blob = new Blob([lines.join('\n')], {type:'text/plain'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'NextStep_Navigator_Bookmarks.txt';
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    }
+  let title = '';
+  if(type==='student') title='Future Scholar';
+  else if(type==='graduate') title='Rising Graduate';
+  else if(type==='professional') title='Career Trailblazer';
 
-    // -----------------------------
-    // Navigation tracking
-    // -----------------------------
-    function bindQuickLinks(){
-      $$('.quick-link').forEach(node=>{
-        node.addEventListener('click', (e)=>{
-          e.preventDefault();
-          const href = node.getAttribute('data-href');
-          const label = node.querySelector('.fw-bold')?.textContent?.trim() || href;
-          pushRecent(href, label);
-          // Simulate navigation for now; replace with real pages later:
-          window.location.href = href;
-        });
-      });
-    }
+  if(name || type){
+    g.innerHTML = `
+      <div class="alert alert-info mt-3 mb-0 border-0">
+        <strong>Hello${name?`, ${NSN.utils.escapeHTML(name)}`:''}!</strong>
+        ${title?` Welcome, <em>${title}</em>.`:''}
+        Your experience is now tailored to <strong>${type||'—'}</strong>.
+      </div>`;
+  } else {
+    g.innerHTML = `<div class="text-muted small mt-2">Tip: Enter your name and choose a user type to personalize.</div>`;
+  }
+}
 
-    // -----------------------------
-    // Session reset
-    // -----------------------------
-    function resetSession(){
-      sessionStorage.removeItem('nsn_name');
-      sessionStorage.removeItem('nsn_type');
-      byId('username').value = '';
-      byId('userType').value = '';
-      paintGreeting();
-      paintTailored();
-    }
+/* -----------------------------
+   Tailored menu data (static)
+----------------------------- */
+const TAILORED = {
+  student: [
+    {title:'Career Bank', icon:'bi-briefcase', href:'careers.html', desc:'Explore careers aligned with school subjects.'},
+    {title:'Interest Quiz', icon:'bi-ui-checks-grid', href:'quiz.html', desc:'Discover your strengths & streams.'},
+    {title:'Study Tips', icon:'bi-mortarboard', href:'admissions.html#stream', desc:'Choose streams post-10th with confidence.'},
+    {title:'Multimedia', icon:'bi-camera-reels', href:'multimedia.html?cat=motivation', desc:'Talks & podcasts for students.'},
+    {title:'Success Stories', icon:'bi-stars', href:'stories.html?domain=engineering', desc:'Inspiration from real journeys.'},
+    {title:'Resource Library', icon:'bi-journal-text', href:'resources.html?type=checklists', desc:'Checklists & guides for exams.'}
+  ],
+  graduate: [
+    {title:'Career Bank', icon:'bi-briefcase', href:'careers.html?filter=graduate', desc:'Roles, skills, and salary insights.'},
+    {title:'Interest Quiz', icon:'bi-ui-checks-grid', href:'quiz.html?mode=ugpg', desc:'Map interests to majors.'},
+    {title:'Interview Tips', icon:'bi-patch-question', href:'admissions.html#interview', desc:'Ace your first interviews.'},
+    {title:'Resume Guidelines', icon:'bi-file-earmark-person', href:'admissions.html#resume', desc:'Craft a standout resume.'},
+    {title:'Multimedia', icon:'bi-camera-reels', href:'multimedia.html?cat=internships', desc:'Internship advice & journeys.'},
+    {title:'Resource Library', icon:'bi-journal-text', href:'resources.html?type=ebooks', desc:'eBooks, templates & articles.'}
+  ],
+  professional: [
+    {title:'Career Bank', icon:'bi-briefcase', href:'careers.html?filter=professional', desc:'Upskilling paths & transitions.'},
+    {title:'Interest Quiz', icon:'bi-ui-checks-grid', href:'quiz.html?mode=pro', desc:'Find adjacent career moves.'},
+    {title:'Interview Tips', icon:'bi-chat-square-quote', href:'admissions.html#interview', desc:'Senior interview strategies.'},
+    {title:'Resume Guidelines', icon:'bi-file-earmark-person', href:'admissions.html#resume', desc:'Reframe experience for pivots.'},
+    {title:'Multimedia', icon:'bi-camera-reels', href:'multimedia.html?cat=roles', desc:'Day-in-the-life videos.'},
+    {title:'Resource Library', icon:'bi-journal-text', href:'resources.html?type=webinars', desc:'Webinars & checklists.'}
+  ]
+};
 
-    // -----------------------------
-    // Auth buttons (dummy)
-    // -----------------------------
-    function bindAuth(){
-      byId('btnLogin').addEventListener('click', ()=>alert('This is a static prototype.\nLogin is non-functional by design.'));
-      byId('btnSignup').addEventListener('click', ()=>alert('This is a static prototype.\nSignup is non-functional by design.'));
-    }
+function cardHTML(item){
+  return `
+    <div class="col-6 col-md-4 col-lg-3">
+      <a class="feature-card d-block p-3 h-100 pointer quick-link" data-href="${item.href}">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="fw-bold">${NSN.utils.escapeHTML(item.title)}</span>
+          <i class="bi ${item.icon} fs-4 text-primary"></i>
+        </div>
+        <p class="small text-muted mb-0">${NSN.utils.escapeHTML(item.desc)}</p>
+      </a>
+    </div>`;
+}
 
-    // -----------------------------
-    // Init
-    // -----------------------------
-    document.addEventListener('DOMContentLoaded', ()=>{
-      // Footer year
-      byId('year').textContent = new Date().getFullYear();
+function paintTailored(){
+  const grid = document.getElementById('tailoredGrid');
+  const who  = document.getElementById('whoLabel');
+  if (!grid || !who) return;
 
-      // Prefill from session (if any)
-      const name = sessionStorage.getItem('nsn_name') || '';
-      const type = sessionStorage.getItem('nsn_type') || '';
-      if(name) byId('username').value = name;
-      if(type) byId('userType').value = type;
+  const type = sessionStorage.getItem('nsn_type');
+  grid.innerHTML = '';
+  if(!type){
+    who.textContent = 'Choose your user type to see relevant content.';
+    return;
+  }
+  const list = TAILORED[type] || [];
+  who.textContent = `Showing recommendations for: ${type.charAt(0).toUpperCase()+type.slice(1)}`;
+  grid.innerHTML = list.map(cardHTML).join('');
+  bindQuickLinks();
+}
 
-      // Visitors, clock, geo
-      bumpVisitor();
-      startClock();
-      initGeo();
-
-      // Paint UI blocks
-      paintGreeting();
-      paintTailored();
-      paintRecent();
-      paintBookmarks();
-      bindQuickLinks();
-      bindAuth();
-
-      // Events
-      byId('applyProfile').addEventListener('click', applyProfile);
-      byId('exportBookmarks').addEventListener('click', (e)=>{ e.preventDefault(); exportBookmarks(); });
-      byId('clearSession').addEventListener('click', (e)=>{ e.preventDefault(); resetSession(); });
+/* -----------------------------
+   Navigation tracking (uses shared recents)
+----------------------------- */
+function bindQuickLinks(){
+  $$('.quick-link').forEach(node=>{
+    node.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const href  = node.getAttribute('data-href');
+      const label = node.querySelector('.fw-bold')?.textContent?.trim() || href || 'Link';
+      // Shared, safe recent writer: (label, href)
+      NSN.pushRecent(label, href, '#recentList');
+      window.location.href = href;
     });
+  });
+}
+
+/* -----------------------------
+   Session reset
+----------------------------- */
+function resetSession(){
+  sessionStorage.removeItem('nsn_name');
+  sessionStorage.removeItem('nsn_type');
+  const nameEl = document.getElementById('username');
+  const typeEl = document.getElementById('userType');
+  if (nameEl) nameEl.value = '';
+  if (typeEl) typeEl.value = '';
+  paintGreeting();
+  paintTailored();
+  // Optionally refresh header chips
+  NSN.paintHeaderProfile('#helloUser', '#activeProfile', '#userTypeFilter');
+}
+
+/* -----------------------------
+   Auth buttons (dummy)
+----------------------------- */
+function bindAuth(){
+  const login  = document.getElementById('btnLogin');
+  const signup = document.getElementById('btnSignup');
+  if (login)  login.addEventListener('click', ()=>alert('This is a static prototype.\nLogin is non-functional by design.'));
+  if (signup) signup.addEventListener('click', ()=>alert('This is a static prototype.\nSignup is non-functional by design.'));
+}
+
+/* -----------------------------
+   Init
+----------------------------- */
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Footer year
+  NSN.utils.setYear('#year');
+
+  // Prefill form from session (if any)
+  const name = sessionStorage.getItem('nsn_name') || '';
+  const type = sessionStorage.getItem('nsn_type') || '';
+  const nameEl = document.getElementById('username');
+  const typeEl = document.getElementById('userType');
+  if (nameEl && name) nameEl.value = name;
+  if (typeEl && type) typeEl.value = type;
+
+  // Counters and sensors
+  bumpVisitor();
+  startClock();
+  initGeo();
+
+  // UI blocks
+  paintGreeting();
+  paintTailored();
+
+  // Shared: sanitize & paint recent/bookmarks
+  NSN.getRecent();
+  NSN.paintRecent('#recentList');
+  NSN.paintBookmarks('#bookmarkList');
+
+  // Bind actions
+  bindQuickLinks();
+  bindAuth();
+
+  // Buttons
+  document.getElementById('applyProfile')?.addEventListener('click', applyProfile);
+  document.getElementById('exportBookmarks')?.addEventListener('click', (e)=>{ e.preventDefault(); NSN.exportBookmarks('NextStep_Navigator_Bookmarks.txt'); });
+  document.getElementById('clearSession')?.addEventListener('click', (e)=>{ e.preventDefault(); resetSession(); });
+
+  // Track page open
+  NSN.pushRecent('Opened Home', 'index.html', '#recentList');
+});
+
+
   </script>
 </body>
 </html>
