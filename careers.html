@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Career Bank — NextStep Navigator</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous"/>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
+
+  <style>
+    :root{
+      --brand:#5b7cff; --brand2:#0ea5e9; --ink:#0f172a; --muted:#667085; --ring:#e5e7eb; --card:#fff; --surface:#f8fafc;
+    }
+    body{background:var(--surface); color:var(--ink)}
+    a{text-decoration:none}
+
+    .navbar{background:#fff}
+    .brand-dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 0 0 3px rgba(14,165,233,.15)}
+
+    .page-head{background:#fff;border-bottom:1px solid #eef2f7}
+    .lead-muted{color:var(--muted)}
+
+    .panel{background:#fff;border:1px solid var(--ring);border-radius:18px}
+    .feature-card{border:1px solid var(--ring);background:var(--card);border-radius:16px;transition:all .25s ease}
+    .feature-card:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(16,24,40,.07);border-color:rgba(91,124,255,.4)}
+    .chip{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .6rem;border:1px solid var(--ring);border-radius:999px;background:#fff;font-size:.8rem}
+    .skill{border-color:#dbeafe}
+    .icon-pill{width:40px;height:40px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;background:#eef2ff;color:#3b82f6}
+    .muted{color:var(--muted)}
+    .card-actions .btn{border-radius:10px}
+
+    .result-skel{height:160px;border:1px dashed #e5e7eb;border-radius:16px;animation:pulse 1.2s ease-in-out infinite;background:linear-gradient(90deg,#fff 25%,#f4f6f8 37%,#fff 63%)}
+    @keyframes pulse{0%{background-position:-200px 0}100%{background-position:calc(200px + 100%) 0}}
+    .hidden{display:none !important}
+
+    .view-toggle .btn{border-radius:12px}
+    .salary{font-variant-numeric:tabular-nums}
+    .bookmark-active{color:#e11d48 !important}
+  </style>
+</head>
+<body>
+  <!-- NAV -->
+  <nav class="navbar navbar-expand-lg border-bottom sticky-top">
+    <div class="container py-2">
+      <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="index.html">
+        <span class="brand-dot"></span> NextStep <span class="text-primary">Navigator</span>
+      </a>
+      <div class="ms-auto d-flex align-items-center gap-3">
+        <span class="small text-muted" id="helloUser"></span>
+        <a class="btn btn-outline-secondary btn-sm" href="index.html"><i class="bi bi-house me-1"></i> Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HEADER -->
+  <header class="page-head py-4">
+    <div class="container">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+          <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Career Bank</li>
+        </ol>
+      </nav>
+      <div class="d-flex flex-column flex-md-row align-items-md-end align-items-start justify-content-between gap-3">
+        <div>
+          <h1 class="mb-1">Career Bank</h1>
+          <p class="lead lead-muted mb-0">Browse careers, filter by industry, sort by salary or name, and bookmark your favorites.</p>
+        </div>
+        <div class="view-toggle btn-group" role="group" aria-label="View toggle">
+          <button class="btn btn-outline-primary btn-sm active" id="btnGrid" aria-pressed="true"><i class="bi bi-grid-3x3-gap me-1"></i> Grid</button>
+          <button class="btn btn-outline-primary btn-sm" id="btnList"><i class="bi bi-list-task me-1"></i> List</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="py-4">
+    <div class="container">
+      <div class="row g-4">
+        <!-- Filters panel -->
+        <aside class="col-lg-3">
+          <div class="panel p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <h6 class="mb-0">Filters</h6>
+              <button class="btn btn-link btn-sm" id="btnClearFilters">Clear</button>
+            </div>
+            <hr/>
+            <!-- Search -->
+            <div class="mb-3">
+              <label for="search" class="form-label mb-1">Search</label>
+              <input id="search" type="search" class="form-control" placeholder="Title, skill…"/>
+            </div>
+
+            <!-- Industry -->
+            <div class="mb-3">
+              <label class="form-label mb-1">Industry</label>
+              <div id="industryList" class="d-grid gap-2">
+                <!-- checkboxes injected -->
+              </div>
+            </div>
+
+            <!-- Salary -->
+            <div class="mb-3">
+              <label class="form-label mb-1">Salary Range (USD / year)</label>
+              <div class="d-flex gap-2">
+                <input type="number" id="minSalary" class="form-control" placeholder="Min" min="0" step="1000">
+                <input type="number" id="maxSalary" class="form-control" placeholder="Max" min="0" step="1000">
+              </div>
+            </div>
+
+            <!-- Sort -->
+            <div class="mb-3">
+              <label class="form-label mb-1">Sort by</label>
+              <select id="sortBy" class="form-select">
+                <option value="az">Name (A → Z)</option>
+                <option value="za">Name (Z → A)</option>
+                <option value="salarydesc">Salary (High → Low)</option>
+                <option value="salaryasc">Salary (Low → High)</option>
+              </select>
+            </div>
+
+            <!-- Items / page -->
+            <div class="mb-2">
+              <label class="form-label mb-1">Items per page</label>
+              <select id="perPage" class="form-select">
+                <option>8</option>
+                <option selected>12</option>
+                <option>16</option>
+                <option>24</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel p-3 mt-3">
+            <h6>Bookmarks</h6>
+            <ul id="bookmarkList" class="list-unstyled small mb-2">
+              <li class="text-muted">No bookmarks yet.</li>
+            </ul>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-primary btn-sm" id="exportBookmarks"><i class="bi bi-arrow-down-square me-1"></i> Export</button>
+              <button class="btn btn-outline-danger btn-sm" id="clearBookmarks"><i class="bi bi-trash3 me-1"></i> Clear</button>
+            </div>
+          </div>
+
+          <div class="panel p-3 mt-3">
+            <h6>Recently Viewed</h6>
+            <ul id="recentList" class="list-unstyled small mb-0">
+              <li class="text-muted">Nothing yet.</li>
+            </ul>
+          </div>
+        </aside>
+
+        <!-- Results -->
+        <section class="col-lg-9">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="small text-muted" id="resultCount">Loading careers…</div>
+            <div class="small">
+              <span class="badge text-bg-light" id="activeProfile"></span>
+            </div>
+          </div>
+
+          <!-- Skeletons -->
+          <div id="skeleton" class="row g-3">
+            <div class="col-12 col-md-6 col-xl-4"><div class="result-skel"></div></div>
+            <div class="col-12 col-md-6 col-xl-4"><div class="result-skel"></div></div>
+            <div class="col-12 col-md-6 col-xl-4"><div class="result-skel"></div></div>
+            <div class="col-12 col-md-6 col-xl-4"><div class="result-skel"></div></div>
+            <div class="col-12 col-md-6 col-xl-4"><div class="result-skel"></div></div>
+            <div class="col-12 col-md-6 col-xl-4"><div class="result-skel"></div></div>
+          </div>
+
+          <!-- Grid -->
+          <div id="grid" class="row g-3 hidden"></div>
+
+          <!-- List -->
+          <div id="list" class="hidden"></div>
+
+          <!-- Pagination -->
+          <nav class="d-flex align-items-center justify-content-between mt-3" aria-label="Pagination">
+            <div class="small text-muted" id="pageInfo"></div>
+            <ul class="pagination mb-0">
+              <li class="page-item"><button class="page-link" id="prevPage">Prev</button></li>
+              <li class="page-item"><button class="page-link" id="nextPage">Next</button></li>
+            </ul>
+          </nav>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="py-4 border-top bg-white">
+    <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
+      <div class="small text-muted">© <span id="year"></span> NextStep Navigator • Career Bank</div>
+      <div class="small"><a href="about.html" class="me-3">About</a><a href="contact.html">Contact</a></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+  <script>
+    // ========= Demo dataset (move to data/careers.json if desired) =========
+    const CAREERS = [
+      {id:'sw-eng', title:'Software Engineer', industry:'Technology', skills:['JavaScript','Algorithms','Git','APIs'], education:'BSc in CS or related; Bootcamp acceptable', salaryMin:65000, salaryMax:130000, icon:'bi-code-slash'},
+      {id:'data-analyst', title:'Data Analyst', industry:'Technology', skills:['SQL','Excel','Visualization','Python'], education:'BSc in IS/Statistics/Business Analytics', salaryMin:55000, salaryMax:105000, icon:'bi-bar-chart-line'},
+      {id:'ui-ux', title:'UI/UX Designer', industry:'Design', skills:['Wireframing','Figma','User Research','Prototyping'], education:'Design/CS or strong portfolio', salaryMin:50000, salaryMax:100000, icon:'bi-palette2'},
+      {id:'nurse', title:'Registered Nurse', industry:'Healthcare', skills:['Patient Care','Clinical Skills','EMR','Teamwork'], education:'BSN/Associate in Nursing + License', salaryMin:60000, salaryMax:98000, icon:'bi-heart-pulse'},
+      {id:'physician', title:'Physician (General)', industry:'Healthcare', skills:['Diagnostics','EMR','Communication','Clinical'], education:'MD + Residency + License', salaryMin:160000, salaryMax:250000, icon:'bi-clipboard2-pulse'},
+      {id:'acct', title:'Accountant', industry:'Business', skills:['Accounting','Tax','Excel','ERP'], education:'BCom/Accounting + CPA advantage', salaryMin:48000, salaryMax:90000, icon:'bi-calculator'},
+      {id:'mktg', title:'Digital Marketer', industry:'Business', skills:['SEO','Content','Ads','Analytics'], education:'Marketing/Business or Certifications', salaryMin:45000, salaryMax:95000, icon:'bi-megaphone'},
+      {id:'civil', title:'Civil Engineer', industry:'Engineering', skills:['AutoCAD','Project Mgmt','Survey','Materials'], education:'BSc Civil Engineering', salaryMin:65000, salaryMax:120000, icon:'bi-building'},
+      {id:'mech', title:'Mechanical Engineer', industry:'Engineering', skills:['CAD','Thermodynamics','Manufacturing'], education:'BSc Mechanical Engineering', salaryMin:64000, salaryMax:118000, icon:'bi-cpu'},
+      {id:'teacher', title:'High School Teacher', industry:'Education', skills:['Lesson Plans','Assessment','Classroom Mgmt'], education:'BEd + Subject Specialization', salaryMin:42000, salaryMax:80000, icon:'bi-journal-bookmark'},
+      {id:'lawyer', title:'Lawyer', industry:'Law', skills:['Legal Research','Contracts','Litigation'], education:'LLB/JD + Bar License', salaryMin:90000, salaryMax:180000, icon:'bi-balance-scale'},
+      {id:'cyber', title:'Cybersecurity Analyst', industry:'Technology', skills:['SIEM','Threat Hunting','Networking','Linux'], education:'BSc CS/IT + Security Certs', salaryMin:70000, salaryMax:130000, icon:'bi-shield-lock'}
+    ];
+
+    // If you move to external JSON, replace CAREERS with:
+    /*
+    let CAREERS = [];
+    fetch('./data/careers.json')
+      .then(r => r.json())
+      .then(data => { CAREERS = data; init(); })
+      .catch(() => { showError('Could not load careers.json'); });
+    */
+
+    // ========= State =========
+    const state = {
+      q:'', industries:new Set(), min:null, max:null, sort:'az',
+      page:1, perPage:12, view:'grid'
+    };
+
+    // ========= Helpers =========
+    const $ = (s,root=document)=>root.querySelector(s);
+    const $$ = (s,root=document)=>[...root.querySelectorAll(s)];
+    const fmtMoney = n => '$'+Math.round(n).toLocaleString();
+
+    // Storage keys shared with index.html
+    const RECENT_KEY = 'nsn_recent';
+    const BM_KEY = 'nsn_bookmarks';
+
+    // ========= Personalization labels =========
+    function paintHeaderProfile(){
+      const nm = sessionStorage.getItem('nsn_name') || '';
+      const tp = sessionStorage.getItem('nsn_type') || '';
+      $('#helloUser').textContent = (nm || tp) ? `Hi ${nm ? nm : ''}${nm && tp ? ' • ' : ''}${tp ? tp[0].toUpperCase()+tp.slice(1) : ''}` : '';
+      $('#activeProfile').textContent = tp ? `Tailored for: ${tp}` : '';
+    }
+
+    // ========= Filters =========
+    function buildIndustryList(){
+      const industries = [...new Set(CAREERS.map(c => c.industry))].sort();
+      const box = $('#industryList'); box.innerHTML = '';
+      industries.forEach(ind => {
+        const id = 'ind-'+ind.toLowerCase().replace(/\W+/g,'-');
+        const wrap = document.createElement('div');
+        wrap.innerHTML = `
+          <div class="form-check">
+            <input class="form-check-input ind" type="checkbox" id="${id}" value="${ind}">
+            <label class="form-check-label" for="${id}">${ind}</label>
+          </div>`;
+        box.appendChild(wrap.firstElementChild);
+      });
+      $$('.ind').forEach(cb => cb.addEventListener('change', () => {
+        cb.checked ? state.industries.add(cb.value) : state.industries.delete(cb.value);
+        state.page = 1; render();
+      }));
+    }
+
+    // ========= Searching / Sorting / Paging =========
+    function applyFilters(){
+      const q = state.q.trim().toLowerCase();
+      let rows = CAREERS.filter(c => {
+        const matchesQ = !q || c.title.toLowerCase().includes(q) ||
+          c.skills.some(s => s.toLowerCase().includes(q)) ||
+          c.industry.toLowerCase().includes(q);
+        const inInd = !state.industries.size || state.industries.has(c.industry);
+        const inSal = (state.min==null || c.salaryMax >= state.min) &&
+                      (state.max==null || c.salaryMin <= state.max);
+        return matchesQ && inInd && inSal;
+      });
+
+      // Sort
+      rows.sort((a,b)=>{
+        switch(state.sort){
+          case 'az': return a.title.localeCompare(b.title);
+          case 'za': return b.title.localeCompare(a.title);
+          case 'salarydesc': return (b.salaryMax+b.salaryMin)/2 - (a.salaryMax+a.salaryMin)/2;
+          case 'salaryasc': return (a.salaryMax+a.salaryMin)/2 - (b.salaryMax+b.salaryMin)/2;
+          default: return 0;
+        }
+      });
+
+      return rows;
+    }
+
+    function paginate(rows){
+      const start = (state.page-1)*state.perPage;
+      const end = start + state.perPage;
+      const totalPages = Math.max(1, Math.ceil(rows.length / state.perPage));
+      return { slice: rows.slice(start,end), total: rows.length, totalPages };
+    }
+
+    // ========= Rendering =========
+    function cardGrid(c){
+      const avg = Math.round((c.salaryMin + c.salaryMax)/2);
+      const skills = c.skills.slice(0,4).map(s=>`<span class="chip skill">${s}</span>`).join(' ');
+      const bmActive = isBookmarked(c.id) ? 'bookmark-active' : '';
+      return `
+        <div class="col-12 col-md-6 col-xl-4">
+          <div class="feature-card p-3 h-100 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="icon-pill"><i class="bi ${c.icon}"></i></div>
+              <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark" data-bm="${c.id}">
+                <i class="bi bi-heart-fill"></i>
+              </button>
+            </div>
+            <h5 class="mt-2 mb-1">${c.title}</h5>
+            <div class="small muted mb-2"><i class="bi bi-diagram-3 me-1"></i>${c.industry}</div>
+            <div class="mb-2 d-flex flex-wrap gap-1">${skills}</div>
+            <div class="mt-auto">
+              <div class="small muted">Education: ${c.education}</div>
+              <div class="fw-semibold salary mt-1">${fmtMoney(c.salaryMin)} – ${fmtMoney(c.salaryMax)} <span class="text-secondary small">avg ${fmtMoney(avg)}</span></div>
+              <div class="card-actions d-flex gap-2 mt-3">
+                <a class="btn btn-outline-primary btn-sm" href="#" data-view="${c.id}"><i class="bi bi-eye me-1"></i>View</a>
+                <button class="btn btn-primary btn-sm" data-bm="${c.id}"><i class="bi bi-bookmark-plus me-1"></i>Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function rowList(c){
+      const avg = Math.round((c.salaryMin + c.salaryMax)/2);
+      const skills = c.skills.slice(0,5).map(s=>`<span class="chip skill">${s}</span>`).join(' ');
+      const bmActive = isBookmarked(c.id) ? 'bookmark-active' : '';
+      return `
+        <div class="feature-card p-3 mb-2">
+          <div class="d-flex align-items-start justify-content-between">
+            <div class="d-flex align-items-start gap-3">
+              <div class="icon-pill"><i class="bi ${c.icon}"></i></div>
+              <div>
+                <h5 class="mb-1">${c.title}</h5>
+                <div class="small muted mb-2"><i class="bi bi-diagram-3 me-1"></i>${c.industry}</div>
+                <div class="d-flex flex-wrap gap-1 mb-1">${skills}</div>
+                <div class="small">Education: ${c.education}</div>
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="fw-semibold salary">${fmtMoney(c.salaryMin)} – ${fmtMoney(c.salaryMax)}</div>
+              <div class="small text-secondary">avg ${fmtMoney(avg)}</div>
+              <div class="mt-2 d-flex gap-2 justify-content-end">
+                <a class="btn btn-outline-primary btn-sm" href="#" data-view="${c.id}"><i class="bi bi-eye me-1"></i>View</a>
+                <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark" data-bm="${c.id}">
+                  <i class="bi bi-heart-fill"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function render(){
+      const all = applyFilters();
+      const {slice, total, totalPages} = paginate(all);
+
+      $('#resultCount').textContent = `${total} career${total!==1?'s':''} found`;
+      $('#pageInfo').textContent = `Page ${state.page} of ${totalPages}`;
+
+      // Toggle containers
+      $('#skeleton').classList.add('hidden');
+      if(state.view==='grid'){
+        $('#list').classList.add('hidden');
+        $('#grid').classList.remove('hidden');
+        $('#grid').innerHTML = slice.map(cardGrid).join('');
+      } else {
+        $('#grid').classList.add('hidden');
+        $('#list').classList.remove('hidden');
+        $('#list').innerHTML = slice.map(rowList).join('');
+      }
+
+      bindRowActions();
+
+      // Disable/enable pager
+      $('#prevPage').disabled = state.page<=1;
+      $('#nextPage').disabled = state.page>=totalPages;
+    }
+
+    // ========= Bookmarks & Recent =========
+    function getBookmarks(){
+      try { return JSON.parse(localStorage.getItem(BM_KEY) || '[]'); } catch{ return []; }
+    }
+    function isBookmarked(id){ return getBookmarks().some(x=>x.id===id); }
+    function toggleBookmark(id){
+      const list = getBookmarks();
+      const idx = list.findIndex(x=>x.id===id);
+      const item = CAREERS.find(c=>c.id===id);
+      if(!item) return;
+      if(idx>=0) list.splice(idx,1);
+      else list.unshift({id, href:'#', label:item.title});
+      localStorage.setItem(BM_KEY, JSON.stringify(list.slice(0,100)));
+      paintBookmarks();
+    }
+    function paintBookmarks(){
+      const el = $('#bookmarkList');
+      const list = getBookmarks();
+      if(!list.length){ el.innerHTML = '<li class="text-muted">No bookmarks yet.</li>'; return; }
+      el.innerHTML = list.map(x=>`<li><i class="bi bi-heart text-danger me-1"></i>${x.label}</li>`).join('');
+    }
+    function exportBookmarks(){
+      const list = getBookmarks();
+      if(!list.length){ alert('No bookmarks to export.'); return; }
+      const lines = list.map((x,i)=> `${i+1}. ${x.label}`);
+      const blob = new Blob([lines.join('\n')], {type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'Career_Bookmarks.txt'; a.click();
+      URL.revokeObjectURL(url);
+    }
+    function clearBookmarks(){
+      localStorage.removeItem(BM_KEY);
+      paintBookmarks();
+      render();
+    }
+
+    function pushRecent(label, href='#'){
+      const arr = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+      const filtered = arr.filter(x=>x.label!==label);
+      filtered.unshift({label, href, ts: Date.now()});
+      localStorage.setItem(RECENT_KEY, JSON.stringify(filtered.slice(0,8)));
+      paintRecent();
+    }
+    function paintRecent(){
+      const el = $('#recentList');
+      const arr = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+      if(!arr.length){ el.innerHTML = '<li class="text-muted">Nothing yet.</li>'; return; }
+      el.innerHTML = arr.map(x=>`<li>${x.label}</li>`).join('');
+    }
+
+    // ========= Events =========
+    function bindRowActions(){
+      $$('[data-bm]').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          e.preventDefault();
+          const id = btn.getAttribute('data-bm');
+          toggleBookmark(id);
+          // toggle style on both grid/list buttons
+          $$(`[data-bm="${id}"]`).forEach(b=>b.classList.toggle('bookmark-active'));
+        });
+      });
+      $$('[data-view]').forEach(a=>{
+        a.addEventListener('click', (e)=>{
+          e.preventDefault();
+          const id = a.getAttribute('data-view');
+          const item = CAREERS.find(c=>c.id===id);
+          if(!item) return;
+          pushRecent(item.title);
+          // For now, view = simple modal-ish alert. You can replace with a dedicated details page.
+          alert(`${item.title}\nIndustry: ${item.industry}\nSkills: ${item.skills.join(', ')}\nEducation: ${item.education}\nSalary: ${fmtMoney(item.salaryMin)}–${fmtMoney(item.salaryMax)}`);
+        });
+      });
+    }
+
+    // ========= Init / UI wiring =========
+    function wireUI(){
+      // Search
+      $('#search').addEventListener('input', (e)=>{ state.q = e.target.value; state.page=1; render(); });
+
+      // Salary
+      $('#minSalary').addEventListener('change', e=>{
+        const v = e.target.value? Number(e.target.value) : null;
+        state.min = (v!=null && !Number.isNaN(v)) ? v : null; state.page=1; render();
+      });
+      $('#maxSalary').addEventListener('change', e=>{
+        const v = e.target.value? Number(e.target.value) : null;
+        state.max = (v!=null && !Number.isNaN(v)) ? v : null; state.page=1; render();
+      });
+
+      // Sort
+      $('#sortBy').addEventListener('change', e=>{ state.sort = e.target.value; render(); });
+
+      // Per page
+      $('#perPage').addEventListener('change', e=>{ state.perPage = Number(e.target.value)||12; state.page=1; render(); });
+
+      // Pagination
+      $('#prevPage').addEventListener('click', ()=>{ state.page = Math.max(1, state.page-1); render(); });
+      $('#nextPage').addEventListener('click', ()=>{ state.page = state.page+1; render(); });
+
+      // Clear filters
+      $('#btnClearFilters').addEventListener('click', ()=>{
+        state.q=''; state.industries.clear(); state.min=null; state.max=null; state.sort='az'; state.page=1; state.perPage=12;
+        $('#search').value=''; $('#minSalary').value=''; $('#maxSalary').value=''; $('#sortBy').value='az'; $('#perPage').value='12';
+        $$('.ind').forEach(cb=>cb.checked=false);
+        render();
+      });
+
+      // View toggle
+      $('#btnGrid').addEventListener('click', ()=>{
+        state.view='grid'; $('#btnGrid').classList.add('active'); $('#btnList').classList.remove('active'); render();
+      });
+      $('#btnList').addEventListener('click', ()=>{
+        state.view='list'; $('#btnList').classList.add('active'); $('#btnGrid').classList.remove('active'); render();
+      });
+
+      // Bookmarks
+      $('#exportBookmarks').addEventListener('click', exportBookmarks);
+      $('#clearBookmarks').addEventListener('click', clearBookmarks);
+    }
+
+    function init(){
+      $('#year').textContent = new Date().getFullYear();
+      paintHeaderProfile();
+      buildIndustryList();
+      paintBookmarks();
+      paintRecent();
+      wireUI();
+
+      // Simulate data loading delay
+      setTimeout(()=>{ render(); }, 300);
+    }
+
+    // Start (use inline CAREERS)
+    document.addEventListener('DOMContentLoaded', init);
+
+    // Utility: show error (not used unless fetching external JSON)
+    function showError(msg){
+      $('#skeleton').classList.add('hidden');
+      $('#grid').classList.add('hidden');
+      $('#list').classList.add('hidden');
+      $('#resultCount').textContent = msg;
+    }
+  </script>
+</body>
+</html>
