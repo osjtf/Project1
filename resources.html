@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Resource Library — NextStep Navigator</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+
+  <style>
+    :root{ --brand:#5b7cff; --brand2:#0ea5e9; --ink:#0f172a; --muted:#667085; --ring:#e5e7eb; --card:#fff; --surface:#f8fafc; }
+    body{ background:var(--surface); color:var(--ink) }
+    a{text-decoration:none}
+    .navbar{ background:#fff }
+    .brand-dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 0 0 3px rgba(14,165,233,.15)}
+    .page-head{background:#fff;border-bottom:1px solid #eef2f7}
+    .lead-muted{color:var(--muted)}
+    .panel{background:#fff;border:1px solid var(--ring);border-radius:18px}
+    .feature-card{border:1px solid var(--ring);background:var(--card);border-radius:16px;transition:all .25s ease}
+    .feature-card:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(16,24,40,.07);border-color:rgba(91,124,255,.4)}
+    .muted{color:var(--muted)}
+    .chip{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--ring);border-radius:999px;padding:.25rem .6rem;background:#fff;font-size:.8rem}
+    .icon-pill{width:42px;height:42px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;background:#eef2ff;color:#3b82f6}
+    .thumb{position:relative;aspect-ratio:4/3;background:#e5e7eb;border-radius:12px;overflow:hidden}
+    .thumb img{width:100%;height:100%;object-fit:cover}
+    .bookmark-active{color:#e11d48 !important}
+    .hidden{display:none !important}
+    .result-skel{height:220px;border:1px dashed #e5e7eb;border-radius:16px;animation:pulse 1.2s ease-in-out infinite;background:linear-gradient(90deg,#fff 25%,#f4f6f8 37%,#fff 63%)}
+    @keyframes pulse{0%{background-position:-200px 0}100%{background-position:calc(200px + 100%) 0}}
+  </style>
+</head>
+<body>
+  <!-- NAV -->
+  <nav class="navbar navbar-expand-lg border-bottom sticky-top">
+    <div class="container py-2">
+      <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="index.html">
+        <span class="brand-dot"></span> NextStep <span class="text-primary">Navigator</span>
+      </a>
+      <div class="ms-auto">
+        <a class="btn btn-outline-secondary btn-sm" href="index.html"><i class="bi bi-house me-1"></i> Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HEADER -->
+  <header class="page-head py-4">
+    <div class="container">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+          <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Resource Library</li>
+        </ol>
+      </nav>
+      <div class="d-flex flex-column flex-md-row align-items-md-end align-items-start justify-content-between gap-3">
+        <div>
+          <h1 class="mb-1">Resource Library</h1>
+          <p class="lead lead-muted mb-0">Articles, eBooks, checklists and webinars — loaded from JSON or fallback if offline.</p>
+        </div>
+        <span class="badge text-bg-light">© <span id="year"></span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="py-4">
+    <div class="container">
+      <div class="row g-4">
+        <!-- Filters -->
+        <aside class="col-lg-3">
+          <div class="panel p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <h6 class="mb-0">Filters</h6>
+              <button class="btn btn-link btn-sm" id="btnClear">Clear</button>
+            </div>
+            <hr class="my-2"/>
+            <div class="mb-3">
+              <label class="form-label mb-1">Search</label>
+              <input type="search" id="search" class="form-control" placeholder="Title, tags, provider…"/>
+            </div>
+            <div class="mb-3">
+              <label class="form-label mb-1">User Type</label>
+              <select id="userTypeFilter" class="form-select">
+                <option value="">All</option>
+                <option value="student">Student</option>
+                <option value="graduate">Graduate</option>
+                <option value="professional">Professional</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label mb-1">Category</label>
+              <select id="categoryFilter" class="form-select">
+                <option value="">All</option>
+                <option value="skills">Skills</option>
+                <option value="resume">Resume</option>
+                <option value="interviewing">Interviewing</option>
+                <option value="study-abroad">Study Abroad</option>
+                <option value="careers">Careers</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label mb-1">Type</label>
+              <select id="typeFilter" class="form-select">
+                <option value="">All</option>
+                <option value="article">Article</option>
+                <option value="ebook">eBook</option>
+                <option value="checklist">Checklist</option>
+                <option value="webinar">Webinar</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label mb-1">Sort by</label>
+              <select id="sortBy" class="form-select">
+                <option value="newest">Newest → Oldest</option>
+                <option value="oldest">Oldest → Newest</option>
+                <option value="az">Title A → Z</option>
+                <option value="za">Title Z → A</option>
+              </select>
+            </div>
+            <div class="mb-0">
+              <label class="form-label mb-1">Items per page</label>
+              <select id="perPage" class="form-select">
+                <option>6</option>
+                <option selected>9</option>
+                <option>12</option>
+                <option>15</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel p-3 mt-3">
+            <h6>Recently Viewed</h6>
+            <ul id="recentList" class="list-unstyled small mb-0">
+              <li class="text-muted">Nothing yet.</li>
+            </ul>
+          </div>
+
+          <div class="panel p-3 mt-3">
+            <h6>Your Bookmarks</h6>
+            <ul id="bookmarkList" class="list-unstyled small mb-2">
+              <li class="text-muted">No bookmarks yet.</li>
+            </ul>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-primary btn-sm" id="exportBookmarks"><i class="bi bi-arrow-down-square me-1"></i> Export</button>
+              <button class="btn btn-outline-danger btn-sm" id="clearBookmarks"><i class="bi bi-trash3 me-1"></i> Clear</button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Results -->
+        <section class="col-lg-9">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="small text-muted" id="resultCount">Loading…</div>
+            <div class="small text-muted" id="activeProfile"></div>
+          </div>
+
+          <div id="skeleton" class="row g-3">
+            <div class="col-12 col-md-6"><div class="result-skel"></div></div>
+            <div class="col-12 col-md-6"><div class="result-skel"></div></div>
+            <div class="col-12 col-md-6"><div class="result-skel"></div></div>
+          </div>
+
+          <div id="grid" class="row g-3 hidden"></div>
+
+          <nav class="d-flex align-items-center justify-content-between mt-3" aria-label="Pagination">
+            <div class="small text-muted" id="pageInfo"></div>
+            <ul class="pagination mb-0">
+              <li class="page-item"><button class="page-link" id="prevPage">Prev</button></li>
+              <li class="page-item"><button class="page-link" id="nextPage">Next</button></li>
+            </ul>
+          </nav>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="py-4 border-top bg-white">
+    <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
+      <div class="small text-muted">© <span id="year2"></span> NextStep Navigator • Resource Library</div>
+      <div class="small"><a href="about.html" class="me-3">About</a><a href="contact.html">Contact</a></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  (function(){
+    "use strict";
+
+    /* ------------------ Utilities ------------------ */
+    const SEL = {
+      year:"#year", year2:"#year2",
+      search:"#search", ut:"#userTypeFilter", cat:"#categoryFilter", typ:"#typeFilter",
+      sort:"#sortBy", per:"#perPage", clear:"#btnClear",
+      grid:"#grid", skeleton:"#skeleton", result:"#resultCount", pageInfo:"#pageInfo",
+      prev:"#prevPage", next:"#nextPage",
+      recent:"#recentList", bmlist:"#bookmarkList",
+      bmExport:"#exportBookmarks", bmClear:"#clearBookmarks"
+    };
+    const $=(s,r=document)=>r.querySelector(s);
+    const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+    const esc=(s="")=>s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+    const show=el=>{ if(!el) return; el.classList.remove("hidden"); el.style.display=""; };
+    const hide=el=>{ if(!el) return; el.classList.add("hidden"); el.style.display="none"; };
+    const toDate=s=>new Date(s);
+
+    const KEYS={ RECENT:"nsn_recent", BOOKMARKS:"nsn_bookmarks" };
+    const getRecent=()=>{ try{return JSON.parse(localStorage.getItem(KEYS.RECENT)||"[]");}catch{return[];} };
+    const pushRecent=(label,href)=>{ const list=getRecent().filter(x=>!(x.label===label&&x.href===href));
+      list.unshift({label,href,ts:Date.now()}); localStorage.setItem(KEYS.RECENT,JSON.stringify(list.slice(0,8))); paintRecent(); };
+    const paintRecent=()=>{ const el=$(SEL.recent); if(!el) return; const list=getRecent();
+      el.innerHTML=list.length?list.map(x=>`<li><a href="${x.href||'#'}">${esc(x.label||'(untitled)')}</a></li>`).join(""):'<li class="text-muted">Nothing yet.</li>'; };
+
+    const getBM=()=>{ try{return JSON.parse(localStorage.getItem(KEYS.BOOKMARKS)||"[]");}catch{return[];} };
+    const isBM = id => getBM().some(x=>x.id===id);
+    const toggleBM = (entry)=>{ const list=getBM(); const i=list.findIndex(x=>x.id===entry.id);
+      if(i>=0) list.splice(i,1); else list.unshift(entry); localStorage.setItem(KEYS.BOOKMARKS,JSON.stringify(list.slice(0,200))); paintBM(); };
+    const paintBM=()=>{ const el=$(SEL.bmlist); if(!el) return; const list=getBM();
+      el.innerHTML=list.length?list.map(x=>`<li><i class="bi bi-heart text-danger me-1"></i>${esc(x.label)}</li>`).join(""):'<li class="text-muted">No bookmarks yet.</li>'; };
+
+    /* ------------------ Data ------------------ */
+    const DATA_URL = "data/resources.json";
+    const FALLBACK = [
+      { id:"f-1", title:"Time Management for Students", description:"Strategies to balance studies and life.", type:"ebook", userType:"student", category:"skills", url:"#", date:"2025-01-07", size:"1.1 MB", tags:["productivity"] },
+      { id:"f-2", title:"Resume Checklist", description:"Everything recruiters look for.", type:"checklist", userType:"graduate", category:"resume", url:"#", date:"2025-03-01", size:"320 KB", tags:["resume","ATS"] },
+      { id:"f-3", title:"Interview Q&A Masterclass", description:"Behavioral & situational Qs with STAR.", type:"article", userType:"graduate", category:"interviewing", url:"#", date:"2025-02-11", tags:["STAR method"] },
+      { id:"f-4", title:"Building Your LinkedIn Brand", description:"Make a profile that gets noticed.", type:"webinar", youtubeId:"dQw4w9WgXcQ", userType:"professional", category:"careers", date:"2024-12-10", minutes:55, tags:["linkedin","networking"] },
+      { id:"f-5", title:"Study Abroad Starter", description:"Scholarships and timelines.", type:"article", userType:"student", category:"study-abroad", url:"#", date:"2024-11-05", tags:["scholarships"] }
+    ];
+
+    let ITEMS=[];
+    const state={ q:"", ut:"", cat:"", typ:"", sort:"newest", page:1, perPage:9 };
+
+    function normalize(rows){
+      return (Array.isArray(rows)?rows:[]).map(it=>{
+        const o={
+          id: it.id || "res-"+Math.random().toString(36).slice(2),
+          title: it.title || "Untitled Resource",
+          description: it.description || "",
+          author: it.author || "",
+          provider: it.provider || "",
+          url: it.url || "",
+          youtubeId: it.youtubeId || "",
+          thumb: it.thumb || "",
+          minutes: Number(it.minutes||0) || "",
+          size: it.size || "",
+          tags: Array.isArray(it.tags)?it.tags:[],
+          type: (it.type||"").toLowerCase().trim(),
+          userType: (it.userType||"").toLowerCase().trim(),
+          category: (it.category||"").toLowerCase().trim(),
+          date: it.date || "2000-01-01"
+        };
+        if(!o.thumb && o.type!=="webinar"){ o.thumb="assets/resources/thumbs/placeholder.jpg"; }
+        return o;
+      });
+    }
+
+    const icon=(t)=>({webinar:"bi-camera-reels", ebook:"bi-book", checklist:"bi-ui-checks", article:"bi-journal-text"})[t] || "bi-journal-text";
+
+    function card(r){
+      const meta = [
+        r.category? `<i class="bi bi-folder2 me-1"></i>${esc(r.category[0].toUpperCase()+r.category.slice(1))}`:"",
+        r.userType? `<i class="bi bi-people me-1"></i>${esc(r.userType[0].toUpperCase()+r.userType.slice(1))}`:"",
+        r.minutes?  `<i class="bi bi-clock me-1"></i>${r.minutes}m`:"",
+        r.size?     `<i class="bi bi-file-earmark-text me-1"></i>${esc(r.size)}`:"",
+        r.date?     `<i class="bi bi-calendar-event me-1"></i>${new Date(r.date).toLocaleDateString()}`:""
+      ].filter(Boolean).join(" · ");
+
+      const media = r.type==="webinar" && r.youtubeId
+        ? `<div class="ratio ratio-16x9 mb-2">
+            <iframe loading="lazy" title="${esc(r.title)}"
+              src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(r.youtubeId)}"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+           </div>`
+        : (r.thumb ? `<div class="thumb mb-2"><img src="${esc(r.thumb)}" alt="${esc(r.title)}"></div>` :
+                     `<div class="thumb mb-2 d-flex align-items-center justify-content-center text-muted">No preview</div>`);
+
+      const primary = r.type==="webinar" && r.youtubeId
+        ? `https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}`
+        : (r.url || "#");
+
+      const tags = (r.tags||[]).map(t=>`<span class="chip"><i class="bi bi-tag"></i> ${esc(t)}</span>`).join(" ");
+      const bmActive = isBM(r.id) ? "bookmark-active" : "";
+
+      return `
+      <div class="col-12 col-md-6 col-xl-4">
+        <article class="feature-card p-3 h-100 d-flex flex-column">
+          <div class="d-flex align-items-start justify-content-between">
+            <div class="icon-pill"><i class="bi ${icon(r.type)}"></i></div>
+            <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark"
+                    data-bm="${r.id}" data-label="${esc(r.title)}" data-href="${esc(primary)}">
+              <i class="bi bi-heart-fill"></i>
+            </button>
+          </div>
+          <h6 class="mt-2 mb-1">${esc(r.title)}</h6>
+          <div class="small muted mb-2">${meta||"&nbsp;"}</div>
+          ${media}
+          <p class="small muted mt-2 mb-2">${esc(r.description)}</p>
+          <div class="d-flex flex-wrap gap-1 mb-2">${tags}</div>
+          <div class="mt-auto d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-primary btn-sm" target="_blank" rel="noreferrer" href="${esc(primary)}">
+              <i class="bi bi-box-arrow-up-right me-1"></i>${r.type==="webinar"?"Watch":"Open"}
+            </a>
+            ${ r.url && r.type!=="webinar" ? `<a class="btn btn-light btn-sm" target="_blank" rel="noreferrer" href="${esc(r.url)}"><i class="bi bi-download me-1"></i>Download</a>` : "" }
+          </div>
+        </article>
+      </div>`;
+    }
+
+    function applyFilters(){
+      const q=(state.q||"").toLowerCase();
+      let rows = ITEMS.filter(r=>{
+        const hay=[r.title,r.description,r.author,r.provider,r.category,r.userType,(r.tags||[]).join(" ")].join(" ").toLowerCase();
+        const mq=!q || hay.includes(q);
+        const mu=!state.ut || r.userType===state.ut;
+        const mc=!state.cat|| r.category===state.cat;
+        const mt=!state.typ|| r.type===state.typ;
+        return mq && mu && mc && mt;
+      });
+      rows.sort((a,b)=>{
+        switch(state.sort){
+          case "newest": return toDate(b.date)-toDate(a.date);
+          case "oldest": return toDate(a.date)-toDate(b.date);
+          case "az": return (a.title||"").localeCompare(b.title||"");
+          case "za": return (b.title||"").localeCompare(a.title||"");
+          default: return 0;
+        }
+      });
+      return rows;
+    }
+
+    function paginate(rows){
+      const start=(state.page-1)*state.perPage, end=start+state.perPage;
+      const totalPages=Math.max(1, Math.ceil(rows.length/state.perPage));
+      return { slice: rows.slice(start,end), total: rows.length, totalPages };
+    }
+
+    function render(){
+      const all=applyFilters();
+      const {slice,total,totalPages}=paginate(all);
+
+      hide($(SEL.skeleton)); show($(SEL.grid));
+      const result=$(SEL.result), grid=$(SEL.grid), pageInfo=$(SEL.pageInfo);
+      if(result) result.textContent = total ? `${total} resource${total!==1?'s':''}` : "No resources match your filters";
+      if(pageInfo) pageInfo.textContent = `Page ${state.page} of ${totalPages}`;
+      if(grid) grid.innerHTML = slice.length ? slice.map(card).join("") :
+        `<div class="col-12"><div class="alert alert-warning mb-0">No results. Try clearing filters.</div></div>`;
+
+      // bind BM toggles
+      $$("[data-bm]").forEach(btn=>{
+        btn.addEventListener("click", (e)=>{
+          e.preventDefault();
+          const entry={ id:btn.getAttribute("data-bm"), label:btn.getAttribute("data-label")||"Resource", href:btn.getAttribute("data-href")||"#" };
+          toggleBM(entry);
+          $$(`[data-bm="${entry.id}"]`).forEach(b=>b.classList.toggle("bookmark-active"));
+        });
+      });
+
+      const prev=$(SEL.prev), next=$(SEL.next);
+      if(prev) prev.disabled = state.page<=1;
+      if(next) next.disabled = state.page>=totalPages;
+    }
+
+    function wire(){
+      $(SEL.search)?.addEventListener("input", e=>{ state.q=e.target.value; state.page=1; render(); });
+      $(SEL.ut)?.addEventListener("change", e=>{ state.ut=(e.target.value||"").toLowerCase(); state.page=1; render(); });
+      $(SEL.cat)?.addEventListener("change", e=>{ state.cat=(e.target.value||"").toLowerCase(); state.page=1; render(); });
+      $(SEL.typ)?.addEventListener("change", e=>{ state.typ=(e.target.value||"").toLowerCase(); state.page=1; render(); });
+      $(SEL.sort)?.addEventListener("change", e=>{ state.sort=(e.target.value||"newest").toLowerCase(); render(); });
+      $(SEL.per)?.addEventListener("change", e=>{ state.perPage=Number(e.target.value)||9; state.page=1; render(); });
+
+      $(SEL.clear)?.addEventListener("click", ()=>{
+        state.q=""; state.ut=""; state.cat=""; state.typ=""; state.sort="newest"; state.page=1; state.perPage=9;
+        if($(SEL.search)) $(SEL.search).value="";
+        if($(SEL.ut)) $(SEL.ut).value="";
+        if($(SEL.cat)) $(SEL.cat).value="";
+        if($(SEL.typ)) $(SEL.typ).value="";
+        if($(SEL.sort)) $(SEL.sort).value="newest";
+        if($(SEL.per)) $(SEL.per).value="9";
+        render();
+      });
+
+      $(SEL.prev)?.addEventListener("click", ()=>{ state.page=Math.max(1,state.page-1); render(); });
+      $(SEL.next)?.addEventListener("click", ()=>{ state.page=state.page+1; render(); });
+
+      $(SEL.bmExport)?.addEventListener("click", ()=>{
+        const list=getBM(); if(!list.length){ alert("No bookmarks to export."); return; }
+        const text=list.map((x,i)=>`${i+1}. ${x.label}${x.href?` — ${x.href}`:""}`).join("\n");
+        const blob=new Blob([text],{type:"text/plain"}); const url=URL.createObjectURL(blob);
+        const a=document.createElement("a"); a.href=url; a.download="Resource_Bookmarks.txt"; a.click(); URL.revokeObjectURL(url);
+      });
+      $(SEL.bmClear)?.addEventListener("click", ()=>{ localStorage.removeItem(KEYS.BOOKMARKS); paintBM(); render(); });
+    }
+
+    // Robust fetch with timeout + graceful fallback
+    async function fetchJSON(url, timeoutMs=6000){
+      const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort("timeout"), timeoutMs);
+      try{
+        const res=await fetch(url,{cache:"no-store", signal:ctl.signal});
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text=await res.text();
+        try { return JSON.parse(text); }
+        catch(e){ console.error("[Resource Library] JSON parse error:", e, "\nRaw:", text.slice(0,300)); throw new Error("Invalid JSON"); }
+      } finally { clearTimeout(t); }
+    }
+
+    async function init(){
+      const nowYear=new Date().getFullYear();
+      $(SEL.year).textContent=nowYear; $(SEL.year2).textContent=nowYear;
+      paintRecent(); paintBM();
+
+      try{
+        const raw = await fetchJSON(DATA_URL, 6000);
+        ITEMS = normalize(raw);
+        console.info("[Resource Library] Loaded JSON:", DATA_URL, "items:", ITEMS.length);
+      }catch(err){
+        console.warn(`[Resource Library] Could not load ${DATA_URL}: ${err.message}. Using fallback dataset.`);
+        ITEMS = normalize(FALLBACK);
+        const rc=$(SEL.result);
+        if(rc) rc.innerHTML = `<span class="text-warning">Loaded fallback (check JSON path or serve over http[s]).</span>`;
+      }
+
+      // Sync initial state from current selects
+      state.ut = (($(SEL.ut)?.value)||"").toLowerCase();
+      state.cat= (($(SEL.cat)?.value)||"").toLowerCase();
+      state.typ= (($(SEL.typ)?.value)||"").toLowerCase();
+      state.perPage = Number($(SEL.per)?.value)||9;
+      state.sort = (($(SEL.sort)?.value)||"newest").toLowerCase();
+
+      wire();
+      render();
+
+      // Auto-clear once if filters produced zero
+      if(!applyFilters().length) $(SEL.clear)?.click();
+
+      pushRecent("Opened Resource Library","resources.html");
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+  })();
+  </script>
+</body>
+</html>
