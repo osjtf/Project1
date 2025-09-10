@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Success Stories — NextStep Navigator</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous"/>
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
+
+  <style>
+    :root{ --brand:#5b7cff; --brand2:#0ea5e9; --ink:#0f172a; --muted:#667085; --ring:#e5e7eb; --card:#fff; --surface:#f8fafc; }
+    html,body{ background:var(--surface); color:var(--ink) }
+    a{text-decoration:none}
+    .navbar{ background:#fff }
+    .brand-dot{ width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 0 0 3px rgba(14,165,233,.15) }
+
+    .page-head{ background:#fff;border-bottom:1px solid #eef2f7 }
+    .lead-muted{ color:var(--muted) }
+
+    .panel{ background:#fff;border:1px solid var(--ring);border-radius:18px }
+    .feature-card{ border:1px solid var(--ring);background:var(--card);border-radius:16px;transition:all .25s ease }
+    .feature-card:hover{ transform:translateY(-2px);box-shadow:0 12px 26px rgba(16,24,40,.07);border-color:rgba(91,124,255,.4) }
+
+    .muted{ color:var(--muted) }
+    .pill{ display:inline-flex;align-items:center;gap:.5rem;padding:.25rem .6rem;border:1px solid var(--ring);border-radius:999px;background:#fff;font-size:.8rem }
+    .chip{ display:inline-flex;gap:.35rem;align-items:center;border:1px solid var(--ring);border-radius:999px;padding:.25rem .6rem;background:#fff;font-size:.8rem }
+    .icon-pill{width:40px;height:40px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;background:#eef2ff;color:#3b82f6}
+
+    .thumb{ position:relative; aspect-ratio:4/3; background:#e5e7eb; border-radius:12px; overflow:hidden }
+    .thumb img{ width:100%; height:100%; object-fit:cover }
+
+    .result-skel{ height:220px; border:1px dashed #e5e7eb; border-radius:16px; animation:pulse 1.2s ease-in-out infinite; background:linear-gradient(90deg,#fff 25%,#f4f6f8 37%,#fff 63%) }
+    @keyframes pulse{ 0%{background-position:-200px 0} 100%{ background-position:calc(200px + 100%) 0 } }
+    .hidden{ display:none !important }
+    .bookmark-active{ color:#e11d48 !important }
+    .story-body{ white-space:pre-wrap }
+    .related a{ font-size:.9rem }
+    .feature-card:focus-within{ outline:3px solid rgba(14,165,233,.45); outline-offset:2px }
+
+    /* Skip link for accessibility */
+    .skip-link{ position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
+    .skip-link:focus{ position:static; width:auto; height:auto; padding:.5rem .75rem; background:#111; color:#fff; z-index:1000; }
+  </style>
+</head>
+<body data-page="stories">
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <!-- NAV -->
+  <nav class="navbar navbar-expand-lg border-bottom sticky-top">
+    <div class="container py-2">
+      <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="index.html">
+        <span class="brand-dot"></span> NextStep <span class="text-primary">Navigator</span>
+      </a>
+      <div class="ms-auto d-flex align-items-center gap-3">
+        <span class="small text-muted" id="helloUser"></span>
+        <a class="btn btn-outline-secondary btn-sm" href="index.html"><i class="bi bi-house me-1"></i> Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HEADER -->
+  <header class="page-head py-4">
+    <div class="container">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+          <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Success Stories</li>
+        </ol>
+      </nav>
+      <div class="d-flex flex-column flex-md-row align-items-md-end align-items-start justify-content-between gap-3">
+        <div>
+          <h1 class="mb-1">Success Stories</h1>
+          <p class="lead lead-muted mb-0">Inspiring journeys across domains — filter by field or audience. Data loaded from JSON.</p>
+        </div>
+        <span class="pill"><i class="bi bi-shield-check"></i> Privacy-first • Static JSON</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="py-4" id="main">
+    <div class="container">
+      <div class="row g-4">
+        <!-- Filters -->
+        <aside class="col-lg-3">
+          <div class="panel p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <h6 class="mb-0">Filters</h6>
+              <button class="btn btn-link btn-sm" id="btnClear" type="button">Clear</button>
+            </div>
+            <hr/>
+
+            <div class="mb-3">
+              <label class="form-label mb-1" for="search">Search</label>
+              <input type="search" id="search" class="form-control" placeholder="Name, title, tags…"/>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label mb-1" for="userTypeFilter">User Type</label>
+              <select id="userTypeFilter" class="form-select">
+                <option value="">All</option>
+                <option value="student">Student</option>
+                <option value="graduate">Graduate</option>
+                <option value="professional">Professional</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label mb-1" for="domainFilter">Domain</label>
+              <select id="domainFilter" class="form-select">
+                <option value="">All</option>
+                <option value="engineering">Engineering</option>
+                <option value="technology">Technology</option>
+                <option value="healthcare">Healthcare</option>
+                <option value="business">Business</option>
+                <option value="arts">Arts</option>
+                <option value="science">Science</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label mb-1" for="sortBy">Sort by</label>
+              <select id="sortBy" class="form-select">
+                <option value="newest">Newest → Oldest</option>
+                <option value="oldest">Oldest → Newest</option>
+                <option value="az">Name A → Z</option>
+                <option value="za">Name Z → A</option>
+              </select>
+            </div>
+
+            <div class="mb-0">
+              <label class="form-label mb-1" for="perPage">Items per page</label>
+              <select id="perPage" class="form-select">
+                <option>6</option>
+                <option selected>9</option>
+                <option>12</option>
+                <option>15</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel p-3 mt-3">
+            <h6>Recently Viewed</h6>
+            <ul id="recentList" class="list-unstyled small mb-0">
+              <li class="text-muted">Nothing yet.</li>
+            </ul>
+          </div>
+
+          <div class="panel p-3 mt-3">
+            <h6>Your Bookmarks</h6>
+            <ul id="bookmarkList" class="list-unstyled small mb-2">
+              <li class="text-muted">No bookmarks yet.</li>
+            </ul>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-primary btn-sm" id="exportBookmarks" type="button">
+                <i class="bi bi-arrow-down-square me-1"></i> Export
+              </button>
+              <button class="btn btn-outline-danger btn-sm" id="clearBookmarks" type="button">
+                <i class="bi bi-trash3 me-1"></i> Clear
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Results -->
+        <section class="col-lg-9">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="small text-muted" id="resultCount" role="status" aria-live="polite">Loading…</div>
+            <div class="small text-muted" id="activeProfile"></div>
+          </div>
+
+          <div id="skeleton" class="row g-3">
+            <div class="col-12 col-md-6 col-xl-4"><div class="result-skel"></div></div>
+            <div class="col-12 col-md-6 col-xl-4"><div class="result-skel"></div></div>
+            <div class="col-12 col-md-6 col-xl-4"><div class="result-skel"></div></div>
+          </div>
+
+          <div id="grid" class="row g-3 hidden"></div>
+
+          <nav class="d-flex align-items-center justify-content-between mt-3" aria-label="Pagination">
+            <div class="small text-muted" id="pageInfo"></div>
+            <ul class="pagination mb-0">
+              <li class="page-item"><button class="page-link" id="prevPage" type="button">Prev</button></li>
+              <li class="page-item"><button class="page-link" id="nextPage" type="button">Next</button></li>
+            </ul>
+          </nav>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="py-4 border-top bg-white">
+    <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
+      <div class="small text-muted">© <span id="year"></span> NextStep Navigator • Success Stories</div>
+      <div class="small"><a href="about.html" class="me-3">About</a><a href="contact.html">Contact</a></div>
+    </div>
+  </footer>
+
+  <!-- Shared module (you already have this) -->
+  <script src="js/nsn-shared.js"></script>
+  <!-- Page-specific JS (inline) -->
+  <script>
+  (function(){
+    const DATA_URL = 'data/stories.json';
+
+    const $  = NSN.utils.$;
+    const $$ = NSN.utils.$$;
+    const esc = (s) => NSN.utils.escapeHTML(s || '');
+
+    let ITEMS = [];
+    const state = { q:'', ut:'', dom:'', sort:'newest', page:1, perPage:9 };
+
+    /* -------- Personalization header -------- */
+    function paintHeaderProfile(){
+      const nm = sessionStorage.getItem('nsn_name') || '';
+      const tp = sessionStorage.getItem('nsn_type') || '';
+      const helloEl = $('#helloUser'); const activeEl = $('#activeProfile');
+      if (helloEl) helloEl.textContent = (nm || tp) ? `Hi ${nm ? nm : ''}${nm && tp ? ' • ' : ''}${tp ? tp[0].toUpperCase()+tp.slice(1) : ''}` : '';
+      if (activeEl) activeEl.textContent = tp ? `Tailored for: ${tp}` : '';
+
+      // prefill user type filter once
+      const sel = $('#userTypeFilter'); if (tp && sel && !sel.value) sel.value = tp;
+    }
+
+    /* -------- Normalize dataset -------- */
+    function normalize(rows){
+      return (rows||[]).map(r=>({
+        id: r.id || `s-${Math.random().toString(36).slice(2)}`,
+        name: r.name || 'Anonymous',
+        title: r.title || '',
+        domain: (r.domain||'').toLowerCase().trim(),
+        userType: (r.userType||'').toLowerCase().trim(),
+        year: Number(r.year||new Date().getFullYear()),
+        date: r.date || `${r.year||new Date().getFullYear()}-01-01`,
+        summary: r.summary || '',
+        story: r.story || '',
+        tags: Array.isArray(r.tags) ? r.tags : [],
+        photo: r.photo || '',
+        links: Array.isArray(r.links) ? r.links : []
+      }));
+    }
+
+    /* -------- Card renderer -------- */
+    function itemCard(it){
+      const tags = (it.tags||[]).map(t=>`<span class="chip"><i class="bi bi-tag"></i> ${esc(t)}</span>`).join(' ');
+      const bmActive = NSN.isBookmarked(it.id) ? 'bookmark-active' : '';
+      const detailsId = `details-${it.id}`;
+
+      return `
+      <div class="col-12 col-md-6 col-xl-4">
+        <article class="feature-card p-3 h-100 d-flex flex-column" tabindex="0">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="icon-pill"><i class="bi bi-stars"></i></div>
+            <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark"
+                    data-bm="${it.id}" data-label="${esc(it.name)} — ${esc(it.title)}" data-href="#${it.id}">
+              <i class="bi bi-heart-fill"></i>
+            </button>
+          </div>
+          <div class="thumb mb-2" aria-hidden="true">
+            ${it.photo ? `<img loading="lazy" src="${esc(it.photo)}" alt="Photo of ${esc(it.name)}">` : ''}
+          </div>
+          <h6 class="mb-0">${esc(it.name)}</h6>
+          <div class="meta small muted mb-1">
+            <i class="bi bi-briefcase me-1"></i>${esc(it.title||'')}
+            · <i class="bi bi-diagram-3 me-1"></i>${esc(it.domain)}
+            · <i class="bi bi-people me-1"></i>${esc(it.userType)}
+            · <i class="bi bi-calendar-event me-1"></i>${esc(String(it.year))}
+          </div>
+          <p class="small muted mb-2">${esc(it.summary)}</p>
+          <div class="d-flex flex-wrap gap-1 mb-2">${tags}</div>
+
+          <div class="mt-auto">
+            <div class="d-flex flex-wrap gap-2">
+              <button class="btn btn-outline-primary btn-sm" data-more="${detailsId}">
+                <i class="bi bi-journal-text me-1"></i> Read more
+              </button>
+              <button class="btn btn-light btn-sm" data-share='${esc(JSON.stringify({id:it.id,name:it.name}))}'>
+                <i class="bi bi-share me-1"></i> Share
+              </button>
+            </div>
+            <div id="${detailsId}" class="mt-2 hidden">
+              <hr/>
+              <div class="story-body">${esc(it.story)}</div>
+              ${it.links && it.links.length
+                ? `<div class="mt-2 related"><strong>Links:</strong> ${
+                    it.links.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" class="me-2">
+                       <i class="bi bi-box-arrow-up-right"></i> ${esc(l.label||'Open')}</a>`).join('')}</div>`
+                : ''}
+              <div class="mt-2 related" data-related="${esc(it.domain)}"></div>
+            </div>
+          </div>
+        </article>
+      </div>`;
+    }
+
+    /* -------- Filters/Sort/Paging -------- */
+    function applyFilters(){
+      const q = state.q.trim().toLowerCase();
+      let rows = ITEMS.filter(it=>{
+        const text = `${it.name} ${it.title} ${it.summary} ${it.story} ${it.tags.join(' ')}`.toLowerCase();
+        const matchesQ = !q || text.includes(q);
+        const matchesUT = !state.ut || it.userType === state.ut;
+        const matchesDom = !state.dom || it.domain === state.dom;
+        return matchesQ && matchesUT && matchesDom;
+      });
+
+      rows.sort((a,b)=>{
+        switch(state.sort){
+          case 'newest': return new Date(b.date) - new Date(a.date);
+          case 'oldest': return new Date(a.date) - new Date(b.date);
+          case 'az': return (a.name||'').localeCompare(b.name||'');
+          case 'za': return (b.name||'').localeCompare(a.name||'');
+          default: return 0;
+        }
+      });
+
+      return rows;
+    }
+
+    function paginate(rows){
+      const start = (state.page-1)*state.perPage;
+      const end = start + state.perPage;
+      const totalPages = Math.max(1, Math.ceil(rows.length / state.perPage));
+      return { slice: rows.slice(start,end), total: rows.length, totalPages };
+    }
+
+    /* -------- Render -------- */
+    function render(){
+      const all = applyFilters();
+      const {slice, total, totalPages} = paginate(all);
+
+      const resultCountEl = $('#resultCount');
+      if (resultCountEl) resultCountEl.textContent = total ? `${total} stor${total===1?'y':'ies'}` : 'No stories match your filters';
+
+      const pageInfoEl = $('#pageInfo');
+      if (pageInfoEl) pageInfoEl.textContent = `Page ${state.page} of ${totalPages}`;
+
+      $('#skeleton')?.classList.add('hidden');
+
+      const grid = $('#grid');
+      if (grid){
+        grid.classList.remove('hidden');
+        grid.innerHTML = slice.length
+          ? slice.map(itemCard).join('')
+          : `<div class="col-12"><div class="alert alert-warning mb-0">No results. Try clearing filters.</div></div>`;
+      }
+
+      wireCardActions();
+
+      const prev = $('#prevPage'), next = $('#nextPage');
+      if (prev) prev.disabled = state.page<=1;
+      if (next) next.disabled = state.page>=totalPages;
+    }
+
+    /* -------- Card actions -------- */
+    function wireCardActions(){
+      // read more
+      $$('[data-more]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id = btn.getAttribute('data-more');
+          const el = document.getElementById(id);
+          if (el){
+            const wasHidden = el.classList.contains('hidden');
+            el.classList.toggle('hidden');
+            btn.innerHTML = wasHidden ? '<i class="bi bi-chevron-up me-1"></i> Hide' : '<i class="bi bi-journal-text me-1"></i> Read more';
+            if (wasHidden){
+              // related (same domain)
+              const host = el.querySelector('[data-related]');
+              const domain = host?.getAttribute('data-related');
+              if (host && domain){
+                const related = ITEMS.filter(x=>x.domain===domain).slice(0,3);
+                host.innerHTML = related.length
+                  ? `<strong>Related:</strong> ` + related.map(r=>`<a href="#" class="me-2" data-open="${r.id}">
+                       <i class="bi bi-person-raised-hand"></i> ${esc(r.name)}</a>`).join('')
+                  : '';
+                $$('[data-open]').forEach(a=>a.addEventListener('click', (e)=>{ e.preventDefault(); openDetails(a.getAttribute('data-open')); }));
+              }
+            }
+          }
+        });
+      });
+
+      // share
+      $$('[data-share]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const meta = JSON.parse(btn.getAttribute('data-share'));
+          const url = location.origin + location.pathname + `?id=${encodeURIComponent(meta.id)}`;
+          const title = 'Success Story — ' + meta.name;
+          try{
+            if (navigator.share){ await navigator.share({ title, url }); }
+            else {
+              await navigator.clipboard.writeText(url);
+              alert('Link copied to clipboard');
+            }
+          } catch {}
+        });
+      });
+
+      // bookmarks
+      $$('[data-bm]').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          e.preventDefault();
+          const entry = { id: btn.getAttribute('data-bm'), label: btn.getAttribute('data-label') || 'Story', href: btn.getAttribute('data-href') || '#' };
+          NSN.toggleBookmark(entry, '#bookmarkList');
+          $$(`[data-bm="${entry.id}"]`).forEach(b=>b.classList.toggle('bookmark-active'));
+        });
+      });
+    }
+
+    function openDetails(id){
+      const el = document.getElementById(`details-${CSS.escape(id)}`);
+      if (el && el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        el.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+    }
+
+    /* -------- UI wiring -------- */
+    function wireUI(){
+      $('#search')?.addEventListener('input', e=>{ state.q=e.target.value; state.page=1; render(); });
+      $('#userTypeFilter')?.addEventListener('change', e=>{ state.ut=e.target.value; state.page=1; render(); });
+      $('#domainFilter')?.addEventListener('change', e=>{ state.dom=e.target.value; state.page=1; render(); });
+      $('#sortBy')?.addEventListener('change', e=>{ state.sort=e.target.value; render(); });
+      $('#perPage')?.addEventListener('change', e=>{ state.perPage=Number(e.target.value)||9; state.page=1; render(); });
+
+      $('#prevPage')?.addEventListener('click', ()=>{ state.page=Math.max(1, state.page-1); render(); });
+      $('#nextPage')?.addEventListener('click', ()=>{ state.page=state.page+1; render(); });
+
+      $('#btnClear')?.addEventListener('click', ()=>{
+        state.q=''; state.ut=''; state.dom=''; state.sort='newest'; state.page=1; state.perPage=9;
+        if($('#search')) $('#search').value='';
+        if($('#userTypeFilter')) $('#userTypeFilter').value='';
+        if($('#domainFilter')) $('#domainFilter').value='';
+        if($('#sortBy')) $('#sortBy').value='newest';
+        if($('#perPage')) $('#perPage').value='9';
+        render();
+      });
+
+      // Shared sidebar actions
+      $('#exportBookmarks')?.addEventListener('click', ()=>NSN.exportBookmarks('Bookmarks.txt'));
+      $('#clearBookmarks')?.addEventListener('click', ()=>NSN.clearBookmarks('#bookmarkList'));
+    }
+
+    /* -------- Init -------- */
+    async function init(){
+      NSN.utils.setYear('#year');
+      paintHeaderProfile();
+
+      // Shared sidebars
+      NSN.getRecent();
+      NSN.paintRecent('#recentList');
+      NSN.paintBookmarks('#bookmarkList');
+
+      try{
+        const raw = await NSN.loadJSON(DATA_URL, { fallback: [], onErrorMessageSelector:'#resultCount' });
+        ITEMS = normalize(raw);
+      } catch (e){
+        console.error(e);
+        alert(e.message || `Failed to load ${DATA_URL}`);
+        return;
+      }
+
+      // Init state from selects
+      state.ut = $('#userTypeFilter')?.value || '';
+      state.dom = $('#domainFilter')?.value || '';
+      state.perPage = Number($('#perPage')?.value)||9;
+      state.sort = $('#sortBy')?.value || 'newest';
+
+      wireUI();
+      render();
+
+      // deep link open (?id=...)
+      const id = new URLSearchParams(location.search).get('id');
+      if (id) setTimeout(()=>openDetails(id), 400);
+
+      NSN.pushRecent('Opened Success Stories', 'stories.html', '#recentList');
+
+      // Dev diagnostics (only on localhost)
+      if (location.hostname==='localhost' || location.hostname==='127.0.0.1') {
+        const el = document.createElement('div');
+        el.style.cssText="position:fixed;bottom:12px;left:12px;z-index:9999;background:#111;color:#fff;padding:8px 12px;border-radius:8px;font:12px/1.4 system-ui;opacity:.92";
+        el.textContent="Diagnostics: running…";
+        document.body.appendChild(el);
+        try {
+          const res = await fetch(DATA_URL, {cache:'no-store'});
+          el.textContent=`Diagnostics: ${res.ok ? 'OK' : 'FAIL'} (status ${res.status})`;
+          const text = await res.text();
+          try { const json = JSON.parse(text); el.textContent += ` • parsed ${Array.isArray(json)?json.length:'n/a'} items`; }
+          catch { el.textContent += ' • JSON parse error'; }
+        } catch { el.textContent='Diagnostics: fetch threw'; }
+        setTimeout(()=>el.remove(), 6000);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+</body>
+</html>
