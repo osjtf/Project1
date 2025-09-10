@@ -200,340 +200,373 @@
       <div class="small"><a href="about.html" class="me-3">About</a><a href="contact.html">Contact</a></div>
     </div>
   </footer>
-
+<script src="js/nsn-shared.js"></script>
+<script src="js/quiz.js"></script>           <!-- page-specific -->
+<!-- or -->
+<script src="js/multimedia.js"></script>     <!-- page-specific -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
   <script>
-    // ========= Demo dataset (move to data/careers.json if desired) =========
-    const CAREERS = [
-      {id:'sw-eng', title:'Software Engineer', industry:'Technology', skills:['JavaScript','Algorithms','Git','APIs'], education:'BSc in CS or related; Bootcamp acceptable', salaryMin:65000, salaryMax:130000, icon:'bi-code-slash'},
-      {id:'data-analyst', title:'Data Analyst', industry:'Technology', skills:['SQL','Excel','Visualization','Python'], education:'BSc in IS/Statistics/Business Analytics', salaryMin:55000, salaryMax:105000, icon:'bi-bar-chart-line'},
-      {id:'ui-ux', title:'UI/UX Designer', industry:'Design', skills:['Wireframing','Figma','User Research','Prototyping'], education:'Design/CS or strong portfolio', salaryMin:50000, salaryMax:100000, icon:'bi-palette2'},
-      {id:'nurse', title:'Registered Nurse', industry:'Healthcare', skills:['Patient Care','Clinical Skills','EMR','Teamwork'], education:'BSN/Associate in Nursing + License', salaryMin:60000, salaryMax:98000, icon:'bi-heart-pulse'},
-      {id:'physician', title:'Physician (General)', industry:'Healthcare', skills:['Diagnostics','EMR','Communication','Clinical'], education:'MD + Residency + License', salaryMin:160000, salaryMax:250000, icon:'bi-clipboard2-pulse'},
-      {id:'acct', title:'Accountant', industry:'Business', skills:['Accounting','Tax','Excel','ERP'], education:'BCom/Accounting + CPA advantage', salaryMin:48000, salaryMax:90000, icon:'bi-calculator'},
-      {id:'mktg', title:'Digital Marketer', industry:'Business', skills:['SEO','Content','Ads','Analytics'], education:'Marketing/Business or Certifications', salaryMin:45000, salaryMax:95000, icon:'bi-megaphone'},
-      {id:'civil', title:'Civil Engineer', industry:'Engineering', skills:['AutoCAD','Project Mgmt','Survey','Materials'], education:'BSc Civil Engineering', salaryMin:65000, salaryMax:120000, icon:'bi-building'},
-      {id:'mech', title:'Mechanical Engineer', industry:'Engineering', skills:['CAD','Thermodynamics','Manufacturing'], education:'BSc Mechanical Engineering', salaryMin:64000, salaryMax:118000, icon:'bi-cpu'},
-      {id:'teacher', title:'High School Teacher', industry:'Education', skills:['Lesson Plans','Assessment','Classroom Mgmt'], education:'BEd + Subject Specialization', salaryMin:42000, salaryMax:80000, icon:'bi-journal-bookmark'},
-      {id:'lawyer', title:'Lawyer', industry:'Law', skills:['Legal Research','Contracts','Litigation'], education:'LLB/JD + Bar License', salaryMin:90000, salaryMax:180000, icon:'bi-balance-scale'},
-      {id:'cyber', title:'Cybersecurity Analyst', industry:'Technology', skills:['SIEM','Threat Hunting','Networking','Linux'], education:'BSc CS/IT + Security Certs', salaryMin:70000, salaryMax:130000, icon:'bi-shield-lock'}
-    ];
 
-    // If you move to external JSON, replace CAREERS with:
-    /*
-    let CAREERS = [];
-    fetch('./data/careers.json')
-      .then(r => r.json())
-      .then(data => { CAREERS = data; init(); })
-      .catch(() => { showError('Could not load careers.json'); });
-    */
+/* Careers page script — depends on NSN shared module */
+const $  = NSN.utils.$;
+const $$ = NSN.utils.$$;
 
-    // ========= State =========
-    const state = {
-      q:'', industries:new Set(), min:null, max:null, sort:'az',
-      page:1, perPage:12, view:'grid'
+let CAREERS = [];
+
+const state = {
+  q: '',
+  industries: new Set(),
+  min: null,
+  max: null,
+  sort: 'az',
+  page: 1,
+  perPage: 12,
+  view: 'grid'
+};
+
+const MONEY = new Intl.NumberFormat(undefined, { style:'currency', currency:'USD', maximumFractionDigits:0 });
+const fmtMoney = n => MONEY.format(Math.round(Number(n)||0));
+
+/* -----------------------------
+   Data loading / normalization
+----------------------------- */
+function normalizeCareers(rows){
+  return (rows || []).map(r => {
+    const skills = Array.isArray(r.skills) ? r.skills : (typeof r.skills === 'string' ? r.skills.split(',').map(s=>s.trim()).filter(Boolean) : []);
+    const salaryMin = Number(r.salaryMin ?? 0);
+    const salaryMax = Number(r.salaryMax ?? 0);
+    return {
+      id: r.id || `c-${Math.random().toString(36).slice(2)}`,
+      title: r.title || 'Untitled Role',
+      industry: (r.industry || '').trim() || 'General',
+      icon: r.icon || 'bi-briefcase',
+      education: r.education || 'Varies',
+      salaryMin: Number.isFinite(salaryMin) ? salaryMin : 0,
+      salaryMax: Number.isFinite(salaryMax) ? salaryMax : 0,
+      skills
     };
+  });
+}
 
-    // ========= Helpers =========
-    const $ = (s,root=document)=>root.querySelector(s);
-    const $$ = (s,root=document)=>[...root.querySelectorAll(s)];
-    const fmtMoney = n => '$'+Math.round(n).toLocaleString();
+/* -----------------------------
+   Personalization labels
+----------------------------- */
+function paintHeaderProfile(){
+  const nm = sessionStorage.getItem('nsn_name') || '';
+  const tp = sessionStorage.getItem('nsn_type') || '';
+  const hello = $('#helloUser');
+  const active = $('#activeProfile');
+  if (hello)  hello.textContent = (nm || tp) ? `Hi ${nm ? nm : ''}${nm && tp ? ' • ' : ''}${tp ? tp[0].toUpperCase()+tp.slice(1) : ''}` : '';
+  if (active) active.textContent = tp ? `Tailored for: ${tp}` : '';
+}
 
-    // Storage keys shared with index.html
-    const RECENT_KEY = 'nsn_recent';
-    const BM_KEY = 'nsn_bookmarks';
+/* -----------------------------
+   Filters
+----------------------------- */
+function buildIndustryList(){
+  const box = $('#industryList');
+  if (!box) return;
+  const list = [...new Set(CAREERS.map(c => c.industry))].sort((a,b)=>a.localeCompare(b));
+  box.innerHTML = '';
+  list.forEach(ind => {
+    const id = 'ind-' + ind.toLowerCase().replace(/\W+/g,'-');
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="form-check">
+        <input class="form-check-input ind" type="checkbox" id="${id}" value="${NSN.utils.escapeHTML(ind)}">
+        <label class="form-check-label" for="${id}">${NSN.utils.escapeHTML(ind)}</label>
+      </div>`;
+    box.appendChild(wrap.firstElementChild);
+  });
+  $$('.ind').forEach(cb => cb.addEventListener('change', () => {
+    cb.checked ? state.industries.add(cb.value) : state.industries.delete(cb.value);
+    state.page = 1;
+    render();
+  }));
+}
 
-    // ========= Personalization labels =========
-    function paintHeaderProfile(){
-      const nm = sessionStorage.getItem('nsn_name') || '';
-      const tp = sessionStorage.getItem('nsn_type') || '';
-      $('#helloUser').textContent = (nm || tp) ? `Hi ${nm ? nm : ''}${nm && tp ? ' • ' : ''}${tp ? tp[0].toUpperCase()+tp.slice(1) : ''}` : '';
-      $('#activeProfile').textContent = tp ? `Tailored for: ${tp}` : '';
+/* -----------------------------
+   Search / Sort / Filter / Page
+----------------------------- */
+function applyFilters(){
+  const q = state.q.trim().toLowerCase();
+  let rows = CAREERS.filter(c => {
+    const hay = `${c.title} ${c.industry} ${c.education} ${c.skills.join(' ')}`.toLowerCase();
+    const matchesQ = !q || hay.includes(q);
+    const inInd = !state.industries.size || state.industries.has(c.industry);
+    const inSal = (state.min==null || c.salaryMax >= state.min) &&
+                  (state.max==null || c.salaryMin <= state.max);
+    return matchesQ && inInd && inSal;
+  });
+
+  rows.sort((a,b)=>{
+    switch(state.sort){
+      case 'az': return a.title.localeCompare(b.title);
+      case 'za': return b.title.localeCompare(a.title);
+      case 'salarydesc': return ((b.salaryMax+b.salaryMin)/2) - ((a.salaryMax+a.salaryMin)/2);
+      case 'salaryasc':  return ((a.salaryMax+a.salaryMin)/2) - ((b.salaryMax+b.salaryMin)/2);
+      default: return 0;
     }
+  });
 
-    // ========= Filters =========
-    function buildIndustryList(){
-      const industries = [...new Set(CAREERS.map(c => c.industry))].sort();
-      const box = $('#industryList'); box.innerHTML = '';
-      industries.forEach(ind => {
-        const id = 'ind-'+ind.toLowerCase().replace(/\W+/g,'-');
-        const wrap = document.createElement('div');
-        wrap.innerHTML = `
-          <div class="form-check">
-            <input class="form-check-input ind" type="checkbox" id="${id}" value="${ind}">
-            <label class="form-check-label" for="${id}">${ind}</label>
-          </div>`;
-        box.appendChild(wrap.firstElementChild);
-      });
-      $$('.ind').forEach(cb => cb.addEventListener('change', () => {
-        cb.checked ? state.industries.add(cb.value) : state.industries.delete(cb.value);
-        state.page = 1; render();
-      }));
-    }
+  return rows;
+}
 
-    // ========= Searching / Sorting / Paging =========
-    function applyFilters(){
-      const q = state.q.trim().toLowerCase();
-      let rows = CAREERS.filter(c => {
-        const matchesQ = !q || c.title.toLowerCase().includes(q) ||
-          c.skills.some(s => s.toLowerCase().includes(q)) ||
-          c.industry.toLowerCase().includes(q);
-        const inInd = !state.industries.size || state.industries.has(c.industry);
-        const inSal = (state.min==null || c.salaryMax >= state.min) &&
-                      (state.max==null || c.salaryMin <= state.max);
-        return matchesQ && inInd && inSal;
-      });
+function paginate(rows){
+  const start = (state.page-1)*state.perPage;
+  const end = start + state.perPage;
+  const totalPages = Math.max(1, Math.ceil(rows.length / state.perPage));
+  return { slice: rows.slice(start,end), total: rows.length, totalPages };
+}
 
-      // Sort
-      rows.sort((a,b)=>{
-        switch(state.sort){
-          case 'az': return a.title.localeCompare(b.title);
-          case 'za': return b.title.localeCompare(a.title);
-          case 'salarydesc': return (b.salaryMax+b.salaryMin)/2 - (a.salaryMax+a.salaryMin)/2;
-          case 'salaryasc': return (a.salaryMax+a.salaryMin)/2 - (b.salaryMax+b.salaryMin)/2;
-          default: return 0;
-        }
-      });
-
-      return rows;
-    }
-
-    function paginate(rows){
-      const start = (state.page-1)*state.perPage;
-      const end = start + state.perPage;
-      const totalPages = Math.max(1, Math.ceil(rows.length / state.perPage));
-      return { slice: rows.slice(start,end), total: rows.length, totalPages };
-    }
-
-    // ========= Rendering =========
-    function cardGrid(c){
-      const avg = Math.round((c.salaryMin + c.salaryMax)/2);
-      const skills = c.skills.slice(0,4).map(s=>`<span class="chip skill">${s}</span>`).join(' ');
-      const bmActive = isBookmarked(c.id) ? 'bookmark-active' : '';
-      return `
-        <div class="col-12 col-md-6 col-xl-4">
-          <div class="feature-card p-3 h-100 d-flex flex-column">
-            <div class="d-flex justify-content-between align-items-start">
-              <div class="icon-pill"><i class="bi ${c.icon}"></i></div>
-              <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark" data-bm="${c.id}">
-                <i class="bi bi-heart-fill"></i>
-              </button>
-            </div>
-            <h5 class="mt-2 mb-1">${c.title}</h5>
-            <div class="small muted mb-2"><i class="bi bi-diagram-3 me-1"></i>${c.industry}</div>
-            <div class="mb-2 d-flex flex-wrap gap-1">${skills}</div>
-            <div class="mt-auto">
-              <div class="small muted">Education: ${c.education}</div>
-              <div class="fw-semibold salary mt-1">${fmtMoney(c.salaryMin)} – ${fmtMoney(c.salaryMax)} <span class="text-secondary small">avg ${fmtMoney(avg)}</span></div>
-              <div class="card-actions d-flex gap-2 mt-3">
-                <a class="btn btn-outline-primary btn-sm" href="#" data-view="${c.id}"><i class="bi bi-eye me-1"></i>View</a>
-                <button class="btn btn-primary btn-sm" data-bm="${c.id}"><i class="bi bi-bookmark-plus me-1"></i>Save</button>
-              </div>
-            </div>
+/* -----------------------------
+   Rendering
+----------------------------- */
+function cardGrid(c){
+  const avg = Math.round((c.salaryMin + c.salaryMax)/2);
+  const skills = c.skills.slice(0,4).map(s=>`<span class="chip skill">${NSN.utils.escapeHTML(s)}</span>`).join(' ');
+  const bmActive = NSN.isBookmarked(c.id) ? 'bookmark-active' : '';
+  return `
+    <div class="col-12 col-md-6 col-xl-4">
+      <div class="feature-card p-3 h-100 d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="icon-pill"><i class="bi ${c.icon}"></i></div>
+          <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark" data-bm="${c.id}" data-label="${NSN.utils.escapeHTML(c.title)}">
+            <i class="bi bi-heart-fill"></i>
+          </button>
+        </div>
+        <h5 class="mt-2 mb-1">${NSN.utils.escapeHTML(c.title)}</h5>
+        <div class="small muted mb-2"><i class="bi bi-diagram-3 me-1"></i>${NSN.utils.escapeHTML(c.industry)}</div>
+        <div class="mb-2 d-flex flex-wrap gap-1">${skills}</div>
+        <div class="mt-auto">
+          <div class="small muted">Education: ${NSN.utils.escapeHTML(c.education)}</div>
+          <div class="fw-semibold salary mt-1">${fmtMoney(c.salaryMin)} – ${fmtMoney(c.salaryMax)} <span class="text-secondary small">avg ${fmtMoney(avg)}</span></div>
+          <div class="card-actions d-flex gap-2 mt-3">
+            <a class="btn btn-outline-primary btn-sm" href="#" data-view="${c.id}"><i class="bi bi-eye me-1"></i>View</a>
+            <button class="btn btn-primary btn-sm" data-bm="${c.id}" data-label="${NSN.utils.escapeHTML(c.title)}"><i class="bi bi-bookmark-plus me-1"></i>Save</button>
           </div>
         </div>
-      `;
-    }
+      </div>
+    </div>
+  `;
+}
 
-    function rowList(c){
-      const avg = Math.round((c.salaryMin + c.salaryMax)/2);
-      const skills = c.skills.slice(0,5).map(s=>`<span class="chip skill">${s}</span>`).join(' ');
-      const bmActive = isBookmarked(c.id) ? 'bookmark-active' : '';
-      return `
-        <div class="feature-card p-3 mb-2">
-          <div class="d-flex align-items-start justify-content-between">
-            <div class="d-flex align-items-start gap-3">
-              <div class="icon-pill"><i class="bi ${c.icon}"></i></div>
-              <div>
-                <h5 class="mb-1">${c.title}</h5>
-                <div class="small muted mb-2"><i class="bi bi-diagram-3 me-1"></i>${c.industry}</div>
-                <div class="d-flex flex-wrap gap-1 mb-1">${skills}</div>
-                <div class="small">Education: ${c.education}</div>
-              </div>
-            </div>
-            <div class="text-end">
-              <div class="fw-semibold salary">${fmtMoney(c.salaryMin)} – ${fmtMoney(c.salaryMax)}</div>
-              <div class="small text-secondary">avg ${fmtMoney(avg)}</div>
-              <div class="mt-2 d-flex gap-2 justify-content-end">
-                <a class="btn btn-outline-primary btn-sm" href="#" data-view="${c.id}"><i class="bi bi-eye me-1"></i>View</a>
-                <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark" data-bm="${c.id}">
-                  <i class="bi bi-heart-fill"></i>
-                </button>
-              </div>
-            </div>
+function rowList(c){
+  const avg = Math.round((c.salaryMin + c.salaryMax)/2);
+  const skills = c.skills.slice(0,5).map(s=>`<span class="chip skill">${NSN.utils.escapeHTML(s)}</span>`).join(' ');
+  const bmActive = NSN.isBookmarked(c.id) ? 'bookmark-active' : '';
+  return `
+    <div class="feature-card p-3 mb-2">
+      <div class="d-flex align-items-start justify-content-between">
+        <div class="d-flex align-items-start gap-3">
+          <div class="icon-pill"><i class="bi ${c.icon}"></i></div>
+          <div>
+            <h5 class="mb-1">${NSN.utils.escapeHTML(c.title)}</h5>
+            <div class="small muted mb-2"><i class="bi bi-diagram-3 me-1"></i>${NSN.utils.escapeHTML(c.industry)}</div>
+            <div class="d-flex flex-wrap gap-1 mb-1">${skills}</div>
+            <div class="small">Education: ${NSN.utils.escapeHTML(c.education)}</div>
           </div>
-        </div>`;
-    }
+        </div>
+        <div class="text-end">
+          <div class="fw-semibold salary">${fmtMoney(c.salaryMin)} – ${fmtMoney(c.salaryMax)}</div>
+          <div class="small text-secondary">avg ${fmtMoney(avg)}</div>
+          <div class="mt-2 d-flex gap-2 justify-content-end">
+            <a class="btn btn-outline-primary btn-sm" href="#" data-view="${c.id}"><i class="bi bi-eye me-1"></i>View</a>
+            <button class="btn btn-light btn-sm border-0 ${bmActive}" title="Bookmark" data-bm="${c.id}" data-label="${NSN.utils.escapeHTML(c.title)}">
+              <i class="bi bi-heart-fill"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
 
-    function render(){
-      const all = applyFilters();
-      const {slice, total, totalPages} = paginate(all);
+function render(){
+  const all = applyFilters();
+  const {slice, total, totalPages} = paginate(all);
 
-      $('#resultCount').textContent = `${total} career${total!==1?'s':''} found`;
-      $('#pageInfo').textContent = `Page ${state.page} of ${totalPages}`;
+  const resultCount = $('#resultCount');
+  if (resultCount) resultCount.textContent = `${total} career${total!==1?'s':''} found`;
+  const pageInfo = $('#pageInfo');
+  if (pageInfo) pageInfo.textContent = `Page ${state.page} of ${totalPages}`;
 
-      // Toggle containers
-      $('#skeleton').classList.add('hidden');
-      if(state.view==='grid'){
-        $('#list').classList.add('hidden');
-        $('#grid').classList.remove('hidden');
-        $('#grid').innerHTML = slice.map(cardGrid).join('');
-      } else {
-        $('#grid').classList.add('hidden');
-        $('#list').classList.remove('hidden');
-        $('#list').innerHTML = slice.map(rowList).join('');
-      }
+  $('#skeleton')?.classList.add('hidden');
 
-      bindRowActions();
+  if(state.view==='grid'){
+    $('#list')?.classList.add('hidden');
+    const grid = $('#grid');
+    grid?.classList.remove('hidden');
+    if (grid) grid.innerHTML = slice.length ? slice.map(cardGrid).join('') :
+      `<div class="col-12"><div class="alert alert-warning mb-0">No results. Try clearing filters.</div></div>`;
+  } else {
+    $('#grid')?.classList.add('hidden');
+    const list = $('#list');
+    list?.classList.remove('hidden');
+    if (list) list.innerHTML = slice.length ? slice.map(rowList).join('') :
+      `<div class="feature-card p-3"><div class="text-warning">No results. Try clearing filters.</div></div>`;
+  }
 
-      // Disable/enable pager
-      $('#prevPage').disabled = state.page<=1;
-      $('#nextPage').disabled = state.page>=totalPages;
-    }
+  bindRowActions();
 
-    // ========= Bookmarks & Recent =========
-    function getBookmarks(){
-      try { return JSON.parse(localStorage.getItem(BM_KEY) || '[]'); } catch{ return []; }
-    }
-    function isBookmarked(id){ return getBookmarks().some(x=>x.id===id); }
-    function toggleBookmark(id){
-      const list = getBookmarks();
-      const idx = list.findIndex(x=>x.id===id);
+  const prev = $('#prevPage'), next = $('#nextPage');
+  if (prev) prev.disabled = state.page<=1;
+  if (next) next.disabled = state.page>=totalPages;
+}
+
+/* -----------------------------
+   Bookmarks & Recent (shared)
+----------------------------- */
+function bindRowActions(){
+  // Bookmark buttons
+  $$('[data-bm]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const id = btn.getAttribute('data-bm');
+      const label = btn.getAttribute('data-label') || 'Career';
+      const item = CAREERS.find(c=>c.id===id);
+      if (!item) return;
+      NSN.toggleBookmark({ id, href: '#', label }, '#bookmarkList');
+      // toggle style on both grid/list buttons
+      $$(`[data-bm="${id}"]`).forEach(b=>b.classList.toggle('bookmark-active'));
+    });
+  });
+
+  // View buttons (simple quick view)
+  $$('[data-view]').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const id = a.getAttribute('data-view');
       const item = CAREERS.find(c=>c.id===id);
       if(!item) return;
-      if(idx>=0) list.splice(idx,1);
-      else list.unshift({id, href:'#', label:item.title});
-      localStorage.setItem(BM_KEY, JSON.stringify(list.slice(0,100)));
-      paintBookmarks();
-    }
-    function paintBookmarks(){
-      const el = $('#bookmarkList');
-      const list = getBookmarks();
-      if(!list.length){ el.innerHTML = '<li class="text-muted">No bookmarks yet.</li>'; return; }
-      el.innerHTML = list.map(x=>`<li><i class="bi bi-heart text-danger me-1"></i>${x.label}</li>`).join('');
-    }
-    function exportBookmarks(){
-      const list = getBookmarks();
-      if(!list.length){ alert('No bookmarks to export.'); return; }
-      const lines = list.map((x,i)=> `${i+1}. ${x.label}`);
-      const blob = new Blob([lines.join('\n')], {type:'text/plain'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'Career_Bookmarks.txt'; a.click();
-      URL.revokeObjectURL(url);
-    }
-    function clearBookmarks(){
-      localStorage.removeItem(BM_KEY);
-      paintBookmarks();
-      render();
-    }
+      NSN.pushRecent(item.title, `careers.html?c=${encodeURIComponent(item.id)}`, '#recentList');
+      alert(`${item.title}
+Industry: ${item.industry}
+Skills: ${item.skills.join(', ')}
+Education: ${item.education}
+Salary: ${fmtMoney(item.salaryMin)}–${fmtMoney(item.salaryMax)}`);
+    });
+  });
+}
 
-    function pushRecent(label, href='#'){
-      const arr = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
-      const filtered = arr.filter(x=>x.label!==label);
-      filtered.unshift({label, href, ts: Date.now()});
-      localStorage.setItem(RECENT_KEY, JSON.stringify(filtered.slice(0,8)));
-      paintRecent();
-    }
-    function paintRecent(){
-      const el = $('#recentList');
-      const arr = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
-      if(!arr.length){ el.innerHTML = '<li class="text-muted">Nothing yet.</li>'; return; }
-      el.innerHTML = arr.map(x=>`<li>${x.label}</li>`).join('');
-    }
+/* -----------------------------
+   UI wiring
+----------------------------- */
+function wireUI(){
+  // Search
+  $('#search')?.addEventListener('input', (e)=>{ state.q = e.target.value; state.page=1; render(); });
 
-    // ========= Events =========
-    function bindRowActions(){
-      $$('[data-bm]').forEach(btn=>{
-        btn.addEventListener('click', (e)=>{
-          e.preventDefault();
-          const id = btn.getAttribute('data-bm');
-          toggleBookmark(id);
-          // toggle style on both grid/list buttons
-          $$(`[data-bm="${id}"]`).forEach(b=>b.classList.toggle('bookmark-active'));
-        });
-      });
-      $$('[data-view]').forEach(a=>{
-        a.addEventListener('click', (e)=>{
-          e.preventDefault();
-          const id = a.getAttribute('data-view');
-          const item = CAREERS.find(c=>c.id===id);
-          if(!item) return;
-          pushRecent(item.title);
-          // For now, view = simple modal-ish alert. You can replace with a dedicated details page.
-          alert(`${item.title}\nIndustry: ${item.industry}\nSkills: ${item.skills.join(', ')}\nEducation: ${item.education}\nSalary: ${fmtMoney(item.salaryMin)}–${fmtMoney(item.salaryMax)}`);
-        });
-      });
-    }
+  // Salary
+  $('#minSalary')?.addEventListener('change', e=>{
+    const v = e.target.value? Number(e.target.value) : null;
+    state.min = (v!=null && !Number.isNaN(v)) ? v : null; state.page=1; render();
+  });
+  $('#maxSalary')?.addEventListener('change', e=>{
+    const v = e.target.value? Number(e.target.value) : null;
+    state.max = (v!=null && !Number.isNaN(v)) ? v : null; state.page=1; render();
+  });
 
-    // ========= Init / UI wiring =========
-    function wireUI(){
-      // Search
-      $('#search').addEventListener('input', (e)=>{ state.q = e.target.value; state.page=1; render(); });
+  // Sort
+  $('#sortBy')?.addEventListener('change', e=>{ state.sort = e.target.value; render(); });
 
-      // Salary
-      $('#minSalary').addEventListener('change', e=>{
-        const v = e.target.value? Number(e.target.value) : null;
-        state.min = (v!=null && !Number.isNaN(v)) ? v : null; state.page=1; render();
-      });
-      $('#maxSalary').addEventListener('change', e=>{
-        const v = e.target.value? Number(e.target.value) : null;
-        state.max = (v!=null && !Number.isNaN(v)) ? v : null; state.page=1; render();
-      });
+  // Per page
+  $('#perPage')?.addEventListener('change', e=>{ state.perPage = Number(e.target.value)||12; state.page=1; render(); });
 
-      // Sort
-      $('#sortBy').addEventListener('change', e=>{ state.sort = e.target.value; render(); });
+  // Pagination
+  $('#prevPage')?.addEventListener('click', ()=>{ state.page = Math.max(1, state.page-1); render(); });
+  $('#nextPage')?.addEventListener('click', ()=>{ state.page = state.page+1; render(); });
 
-      // Per page
-      $('#perPage').addEventListener('change', e=>{ state.perPage = Number(e.target.value)||12; state.page=1; render(); });
+  // Clear filters
+  $('#btnClearFilters')?.addEventListener('click', ()=>{
+    state.q=''; state.industries.clear(); state.min=null; state.max=null; state.sort='az'; state.page=1; state.perPage=12;
+    const s = $('#search'); if (s) s.value='';
+    const mn= $('#minSalary'); if (mn) mn.value='';
+    const mx= $('#maxSalary'); if (mx) mx.value='';
+    const sb= $('#sortBy'); if (sb) sb.value='az';
+    const pp= $('#perPage'); if (pp) pp.value='12';
+    $$('.ind').forEach(cb=>cb.checked=false);
+    render();
+  });
 
-      // Pagination
-      $('#prevPage').addEventListener('click', ()=>{ state.page = Math.max(1, state.page-1); render(); });
-      $('#nextPage').addEventListener('click', ()=>{ state.page = state.page+1; render(); });
+  // View toggle
+  $('#btnGrid')?.addEventListener('click', ()=>{
+    state.view='grid'; $('#btnGrid')?.classList.add('active'); $('#btnList')?.classList.remove('active'); render();
+  });
+  $('#btnList')?.addEventListener('click', ()=>{
+    state.view='list'; $('#btnList')?.classList.add('active'); $('#btnGrid')?.classList.remove('active'); render();
+  });
 
-      // Clear filters
-      $('#btnClearFilters').addEventListener('click', ()=>{
-        state.q=''; state.industries.clear(); state.min=null; state.max=null; state.sort='az'; state.page=1; state.perPage=12;
-        $('#search').value=''; $('#minSalary').value=''; $('#maxSalary').value=''; $('#sortBy').value='az'; $('#perPage').value='12';
-        $$('.ind').forEach(cb=>cb.checked=false);
-        render();
-      });
+  // Bookmarks (shared controls)
+  $('#exportBookmarks')?.addEventListener('click', ()=>NSN.exportBookmarks('Career_Bookmarks.txt'));
+  $('#clearBookmarks')?.addEventListener('click', ()=>{
+    NSN.clearBookmarks('#bookmarkList');
+    render();
+  });
+}
 
-      // View toggle
-      $('#btnGrid').addEventListener('click', ()=>{
-        state.view='grid'; $('#btnGrid').classList.add('active'); $('#btnList').classList.remove('active'); render();
-      });
-      $('#btnList').addEventListener('click', ()=>{
-        state.view='list'; $('#btnList').classList.add('active'); $('#btnGrid').classList.remove('active'); render();
-      });
+/* -----------------------------
+   Deep link helpers
+----------------------------- */
+function applyQueryParams(){
+  const p = new URLSearchParams(location.search);
 
-      // Bookmarks
-      $('#exportBookmarks').addEventListener('click', exportBookmarks);
-      $('#clearBookmarks').addEventListener('click', clearBookmarks);
-    }
+  // ?q=search
+  const q = p.get('q'); if (q){ state.q = q; const s = $('#search'); if (s) s.value = q; }
 
-    function init(){
-      $('#year').textContent = new Date().getFullYear();
-      paintHeaderProfile();
-      buildIndustryList();
-      paintBookmarks();
-      paintRecent();
-      wireUI();
+  // ?industry=Technology
+  const ind = p.get('industry');
+  if (ind) {
+    // Check the box if it exists; else add to state
+    const id = 'ind-' + ind.toLowerCase().replace(/\W+/g,'-');
+    const cb = document.getElementById(id);
+    if (cb){ cb.checked = true; state.industries.add(ind); }
+    else { state.industries.add(ind); }
+  }
 
-      // Simulate data loading delay
-      setTimeout(()=>{ render(); }, 300);
-    }
+  // ?c=careerId → open quick view after first render
+  const cid = p.get('c');
+  if (cid) {
+    setTimeout(()=>{
+      const item = CAREERS.find(c=>c.id===cid);
+      if (item) {
+        NSN.pushRecent(item.title, `careers.html?c=${encodeURIComponent(item.id)}`, '#recentList');
+        alert(`${item.title}
+Industry: ${item.industry}
+Skills: ${item.skills.join(', ')}
+Education: ${item.education}
+Salary: ${fmtMoney(item.salaryMin)}–${fmtMoney(item.salaryMax)}`);
+      }
+    }, 400);
+  }
+}
 
-    // Start (use inline CAREERS)
-    document.addEventListener('DOMContentLoaded', init);
+/* -----------------------------
+   Init
+----------------------------- */
+async function init(){
+  NSN.utils.setYear('#year');
+  paintHeaderProfile();
 
-    // Utility: show error (not used unless fetching external JSON)
-    function showError(msg){
-      $('#skeleton').classList.add('hidden');
-      $('#grid').classList.add('hidden');
-      $('#list').classList.add('hidden');
-      $('#resultCount').textContent = msg;
-    }
+  // Shared sidebars
+  NSN.getRecent();          // sanitize any old data
+  NSN.paintRecent('#recentList');
+  NSN.paintBookmarks('#bookmarkList');
+
+  // Load careers data
+  const raw = await NSN.loadJSON('data/careers.json', { fallback: [], onErrorMessageSelector:'#resultCount' });
+  CAREERS = normalizeCareers(raw);
+
+  buildIndustryList();
+  wireUI();
+  render();
+
+  applyQueryParams();
+
+  NSN.pushRecent('Opened Careers', 'careers.html', '#recentList');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+
   </script>
 </body>
 </html>
