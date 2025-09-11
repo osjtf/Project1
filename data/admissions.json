@@ -1,0 +1,190 @@
+{
+  "streams": [
+    {
+      "id": "stream-sci",
+      "title": "Science (Physics • Chemistry • Mathematics)",
+      "description": "Strong analytical foundation; ideal for engineering, research, and data-driven careers.",
+      "subjects": ["Maths", "Physics", "Chemistry", "Computing (optional)"],
+      "sampleCareers": ["Software Engineer", "Data Analyst", "Research Associate"],
+      "careerIndustry": "Technology",
+      "checklistUrl": "#",
+      "tags": ["analytical", "logic", "quant"],
+      "icon": "bi-cpu",
+      "userType": "student"
+    },
+    {
+      "id": "stream-commerce",
+      "title": "Commerce (Accounting • Economics • Business)",
+      "description": "Business, finance, and entrepreneurship tracks with early exposure to markets.",
+      "subjects": ["Accountancy", "Business Studies", "Economics", "Maths (optional)"],
+      "sampleCareers": ["Accountant", "Financial Analyst", "Marketing Associate"],
+      "careerIndustry": "Business",
+      "checklistUrl": "#",
+      "tags": ["business", "markets", "entrepreneurship"],
+      "icon": "bi-graph-up-arrow",
+      "userType": "student"
+    },
+    {
+      "id": "stream-arts",
+      "title": "Arts & Humanities",
+      "description": "Communication, design, public policy, languages, and social sciences.",
+      "subjects": ["History", "Political Science", "Psychology", "Languages", "Fine Arts"],
+      "sampleCareers": ["UX Designer", "Content Strategist", "Policy Analyst"],
+      "careerIndustry": "Design",
+      "checklistUrl": "#",
+      "tags": ["creative", "writing", "social impact"],
+      "icon": "bi-palette2",
+      "userType": "student"
+    }
+  ],
+  "timeline": [
+    {
+      "title": "12–18 months before intake",
+      "subtitle": "Research destinations, programs, and budget",
+      "actions": [
+        "Shortlist 8–12 universities across 2–3 countries",
+        "Map tuition + living costs; check scholarship windows",
+        "Collect course prerequisites (GPA, subjects, portfolio)"
+      ],
+      "documents": ["Passport", "Transcripts", "English test dates (IELTS/TOEFL/PTE)"]
+    },
+    {
+      "title": "9–12 months before",
+      "subtitle": "Tests and recommendations",
+      "actions": [
+        "Book and take standardized tests (GRE/GMAT if required)",
+        "Request 2–3 Letters of Recommendation",
+        "Draft SOP/Personal Statement outlines"
+      ],
+      "documents": ["IELTS/TOEFL score", "GRE/GMAT score", "LORs"]
+    },
+    {
+      "title": "6–9 months before",
+      "subtitle": "Applications",
+      "actions": [
+        "Finalize SOP; tailor per university",
+        "Upload documents to portals and submit",
+        "Track deadlines and funding applications"
+      ],
+      "documents": ["SOP/Personal Statement", "CV/Resume", "Portfolio (if applicable)"]
+    },
+    {
+      "title": "3–6 months before",
+      "subtitle": "Visas and accommodation",
+      "actions": [
+        "Accept an offer; request CAS/I-20 (country specific)",
+        "Arrange finances and proof of funds",
+        "Apply for student visa and book accommodation"
+      ],
+      "documents": ["Offer letter", "Financial proofs", "Visa application"]
+    },
+    {
+      "title": "0–3 months before",
+      "subtitle": "Pre-departure",
+      "actions": [
+        "Buy insurance and flights",
+        "Attend pre-departure briefing (if offered)",
+        "Prepare academic gear and essential documents"
+      ],
+      "documents": ["Insurance", "Flight tickets", "University onboarding pack"]
+    }
+  ],
+  "interviews": [
+    {
+      "id": "iv-grad",
+      "title": "Graduate • First-role interviews",
+      "subtitle": "What entry-level recruiters look for",
+      "tips": [
+        "Prepare 3–4 concise achievement stories using STAR",
+        "Quantify outcomes even for coursework and internships",
+        "Study the job description; mirror the language"
+      ],
+      "qas": [
+        { "q": "Tell me about yourself", "hint": "60–90s story linked to role", "sample": "I’m a B.Com graduate who led a campus consulting sprint... now I’m targeting analyst roles where I can use Excel & SQL to model…" },
+        { "q": "A time you handled conflict", "hint": "STAR; focus on resolution", "sample": "On a team project, two members disagreed on scope… I facilitated a brief sync…" }
+      ],
+      "tags": ["STAR", "entry-level", "projects"],
+      "icon": "bi-patch-question",
+      "userType": "graduate"
+    },
+    {
+      "id": "iv-pro",
+      "title": "Professional • Career-change interviews",
+      "subtitle": "Reframe experience; highlight transferable skills",
+      "tips": [
+        "Open with a positioning statement (who you are → where you’re going)",
+        "Bridge past roles to target role outcomes with metrics",
+        "Pre-empt gaps with ‘what I did to upskill’"
+      ],
+      "qas": [
+        { "q": "Why this transition?", "hint": "Present pull factors + proof", "sample": "After 4 years in operations, I’m moving to product because I’ve shipped internal tools that cut cycle time 22%…" },
+        { "q": "Most impactful project", "hint": "Pick a quantifiable win", "sample": "Led cross-team rollout; reduced defects 35% in 2 quarters…" }
+      ],
+      "tags": ["transferable skills", "reframing", "positioning"],
+      "icon": "bi-chat-square-quote",
+      "userType": "professional"
+    }
+  ],
+  "resume": [
+    {
+      "id": "res-structure",
+      "title": "Structure & ATS basics",
+      "subtitle": "Clean layout; one page for grads, up to two for seniors",
+      "summary": "Use a simple two-column grid sparingly, standard fonts (11–12pt), and consistent spacing. Export to PDF.",
+      "dos": [
+        "Lead bullets with strong verbs (Built, Led, Automated)",
+        "Use impact metrics (%, time saved, revenue)",
+        "Mirror key phrases from the job description"
+      ],
+      "donts": [
+        "No photos, heavy graphics, or tables",
+        "Avoid paragraphs; prefer concise bullets",
+        "Don’t list every task — focus on results"
+      ],
+      "examples": [
+        { "heading": "Good bullet", "text": "Automated monthly report in Apps Script, cutting prep time by 6 hours (-80%)." },
+        { "heading": "Weak bullet", "text": "Responsible for making reports." }
+      ]
+    },
+    {
+      "id": "res-grad",
+      "title": "Graduates: Projects & internships",
+      "subtitle": "Make academic work market-ready",
+      "summary": "Show 2–3 relevant projects with problem → action → impact; place internships above coursework.",
+      "dos": [
+        "Add GitHub/portfolio where relevant",
+        "Include tools (Excel, Python, Figma) with context",
+        "Show leadership in clubs/volunteering"
+      ],
+      "donts": [
+        "Don’t overfill ‘Objective’ — use a crisp headline",
+        "Avoid generic skill dumps without proof",
+        "Don’t hide GPA if it strengthens your case"
+      ],
+      "examples": [
+        { "heading": "Project bullet", "text": "Built a Flask API for attendance; reduced manual entry by 90% across 3 classes." }
+      ],
+      "userType": "graduate"
+    },
+    {
+      "id": "res-pro",
+      "title": "Professionals: Impact narrative",
+      "subtitle": "Translate experience into business outcomes",
+      "summary": "For each role, pick 3–5 wins tied to KPIs (cost, quality, speed, NPS).",
+      "dos": [
+        "Group bullets under themes (Delivery, Quality, Growth)",
+        "Show cross-functional collaboration",
+        "Include mentoring, hiring, or training impact"
+      ],
+      "donts": [
+        "Don’t list outdated tech beyond the last 10 years unless relevant",
+        "Avoid jargon; keep bullets scannable",
+        "Don’t repeat the same bullet across roles"
+      ],
+      "examples": [
+        { "heading": "Impact bullet", "text": "Reduced incident MTTR from 140m to 52m by introducing runbooks and weekly postmortems." }
+      ],
+      "userType": "professional"
+    }
+  ]
+}
